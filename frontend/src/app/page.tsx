@@ -148,9 +148,6 @@ export default function LandingPage() {
                 <Link href="/login">Sign in to the portal</Link>
               </Button>
             </div>
-            <p className="mt-6 text-sm text-muted-foreground">
-              Explore the live demo — no account needed.
-            </p>
           </div>
         </section>
 
