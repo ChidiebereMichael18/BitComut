@@ -28,7 +28,7 @@ export default function ProfileScreen() {
   const BORDER   = isDark ? '#1C271C' : '#E5E7EB';
   const TEXT     = isDark ? '#F0F0F0' : '#111827';
   const MUTED    = isDark ? '#7E967E' : '#6B7280';
-  const GREEN    = '#1B7F3B';
+  const GREEN    = '#386635';
   const SUCCESS  = isDark ? '#22C55E' : '#16A34A';
   const DANGER   = isDark ? '#EF4444' : '#DC2626';
 

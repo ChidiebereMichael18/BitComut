@@ -17,12 +17,14 @@ const TAB_CONFIG: {
   { name: 'profile', label: 'Profile',   icon: 'person-outline',          iconFocused: 'person' },
 ];
 
+const BRAND_GREEN = '#386635';
+
 export default function MainLayout() {
   const isDark = useColorScheme() === 'dark';
 
-  const tabBg       = isDark ? '#0F170F' : '#FFFFFF';
-  const tabBorder   = isDark ? '#1C2B1C' : '#E5E7EB';
-  const activeCol   = '#1B7F3B'; // Brand Green
+  const tabBg       = isDark ? '#121C12' : '#FFFFFF';
+  const tabBorder   = isDark ? '#1F2E1F' : '#E5E7EB';
+  const activeCol   = BRAND_GREEN;
   const inactiveCol = isDark ? '#6B7280' : '#8E8E93';
 
   return (

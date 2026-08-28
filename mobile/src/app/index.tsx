@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { AppLogo } from '@/components/ui/app-logo';
 import { useAuth } from '@/context/auth-context';
 
+const BRAND_GREEN = '#386635'; // Muted Forest Green matching reference UI
+
 export default function SplashScreen() {
   const { isLoggedIn } = useAuth();
 
@@ -35,11 +37,11 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B7F3B" />
+      <StatusBar barStyle="light-content" backgroundColor={BRAND_GREEN} />
 
-      {/* Centered Large App Logo */}
+      {/* Centered App Logo */}
       <Animated.View style={[styles.centerLogo, { opacity, transform: [{ scale }] }]}>
-        <AppLogo size={110} bg="#FFFFFF" color="#1B7F3B" useImage />
+        <AppLogo size={110} bg="#FFFFFF" color={BRAND_GREEN} useImage />
       </Animated.View>
 
       {/* Bottom Branding (Matching Raenest reference layout) */}
@@ -54,7 +56,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1B7F3B', // Brand Green
+    backgroundColor: BRAND_GREEN,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -77,7 +79,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 13,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: 'rgba(255, 255, 255, 0.88)',
     letterSpacing: 0.2,
   },
 });

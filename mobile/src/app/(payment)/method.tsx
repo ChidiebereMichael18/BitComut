@@ -54,7 +54,7 @@ export default function MethodScreen() {
   const BORDER = isDark ? '#1C271C' : '#E4E4E4';
   const TEXT   = isDark ? '#F0F0F0' : '#0D0D0D';
   const MUTED  = isDark ? '#4E644E' : '#6B7280';
-  const GREEN  = '#1B7F3B';
+  const GREEN  = '#386635';
   const BTC    = '#F59E0B';
 
   const amtToPay = selectedAmount || 285000;

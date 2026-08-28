@@ -15,6 +15,8 @@ import { useAuth } from '@/context/auth-context';
 import { usePayment } from '@/context/payment-context';
 import { getCountryConfig } from '@/constants/universities';
 
+const BRAND_GREEN = '#386635'; // Exact Muted Forest Green from user reference screenshot
+
 export default function HomeScreen() {
   const isDark = useColorScheme() === 'dark';
   const { user } = useAuth();
@@ -24,16 +26,16 @@ export default function HomeScreen() {
   const countryConfig  = getCountryConfig(user?.country);
   const btcRate        = countryConfig.btcRate;
   const currencySymbol = countryConfig.currencySymbol;
+  const currencyCode   = countryConfig.currency;
 
-  // Theme Colors
-  const GREEN    = '#1B7F3B';
+  // Theme Colors (Default White & Green theme)
   const BG       = isDark ? '#070C07' : '#F4F6F4';
-  const SHEET_BG = isDark ? '#0E150E' : '#FFFFFF';
-  const CARD_BG  = isDark ? '#131D13' : '#F8FAF8';
-  const BORDER   = isDark ? '#1C271C' : '#E5E7EB';
-  const TEXT     = isDark ? '#F0F0F0' : '#111827';
-  const MUTED    = isDark ? '#7E967E' : '#6B7280';
-  const SUCCESS  = isDark ? '#22C55E' : '#16A34A';
+  const SHEET_BG = isDark ? '#121C12' : '#FFFFFF';
+  const STAT_BG  = isDark ? '#182418' : '#F4F8F4';
+  const BORDER   = isDark ? '#233323' : '#E5E8E5';
+  const TEXT     = isDark ? '#F0F0F0' : '#1A2E1A';
+  const MUTED    = isDark ? '#7E967E' : '#6B7A6B';
+  const SUCCESS  = isDark ? '#22C55E' : '#2B7A28';
   const DANGER   = isDark ? '#EF4444' : '#DC2626';
   const WARN     = '#F59E0B';
 
@@ -49,13 +51,13 @@ export default function HomeScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
-      <StatusBar barStyle="light-content" backgroundColor={GREEN} />
+      <StatusBar barStyle="light-content" backgroundColor={BRAND_GREEN} />
 
-      {/* ── Top Header Banner (Dark Green) ── */}
+      {/* ── Top Header Banner (Forest Green #386635) ── */}
       <View style={s.topHeader}>
         <SafeAreaView edges={['top']} style={s.headerSafeArea}>
           <View style={s.headerContent}>
-            {/* User Avatar + Greeting */}
+            {/* User Avatar + Name */}
             <Pressable onPress={() => router.push('/(main)/profile')} style={s.userInfoRow}>
               <View style={s.avatarCircle}>
                 <Text style={s.avatarTxt}>{user?.avatarInitials ?? 'BC'}</Text>
@@ -67,7 +69,7 @@ export default function HomeScreen() {
               </View>
             </Pressable>
 
-            {/* Bell Icon */}
+            {/* Bell Notification Button */}
             <Pressable style={s.bellBtn}>
               <Ionicons name="notifications-outline" size={20} color="#FFFFFF" />
               <View style={s.bellDot} />
@@ -76,14 +78,14 @@ export default function HomeScreen() {
         </SafeAreaView>
       </View>
 
-      {/* ── Main Scroll View inside White/Dark Curved Sheet ── */}
+      {/* ── Curved White Container Sheet ── */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scrollContent}>
 
         <View style={[s.curvedSheet, { backgroundColor: SHEET_BG, borderColor: BORDER }]}>
 
-          {/* 1. Outstanding Balance Card (Brand Green) */}
+          {/* 1. Featured Forest Green Outstanding Balance Card */}
           <Pressable
             style={({ pressed }) => [s.balanceCard, { opacity: pressed ? 0.92 : 1 }]}
             onPress={() => router.push('/(main)/pay')}>
@@ -95,58 +97,85 @@ export default function HomeScreen() {
                 </Text>
               </View>
               <View style={s.arrowCircle}>
-                <Ionicons name="arrow-forward" size={20} color="#1B7F3B" />
+                <Ionicons name="arrow-forward" size={20} color={BRAND_GREEN} />
               </View>
             </View>
             <Text style={s.balanceCardSub}>
-              ≈ {btcEquiv} BTC · tap to pay with Lightning ⚡
+              ≈ {btcEquiv} BTC · tap to pay ⚡
             </Text>
           </Pressable>
 
-          {/* 2. Shortcuts Horizontal Scroll */}
+          {/* 2. Three Equal Grid Stats Row (Matching User Screenshot) */}
+          <View style={s.statsRow}>
+            {/* Stat 1 */}
+            <View style={[s.statCard, { backgroundColor: STAT_BG, borderColor: BORDER }]}>
+              <Ionicons name="school-outline" size={22} color={BRAND_GREEN} />
+              <Text style={[s.statVal, { color: TEXT }]}>{pendingFees.length}</Text>
+              <Text style={[s.statTitle, { color: TEXT }]}>Fees</Text>
+              <Text style={[s.statSub, { color: MUTED }]}>Pending</Text>
+            </View>
+
+            {/* Stat 2 */}
+            <View style={[s.statCard, { backgroundColor: STAT_BG, borderColor: BORDER }]}>
+              <Ionicons name="logo-bitcoin" size={22} color="#F59E0B" />
+              <Text style={[s.statVal, { color: TEXT }]}>{countryConfig.rateFormatted.replace(currencySymbol, '')}</Text>
+              <Text style={[s.statTitle, { color: TEXT }]}>BTC Rate</Text>
+              <Text style={[s.statSub, { color: MUTED }]}>{currencyCode}</Text>
+            </View>
+
+            {/* Stat 3 */}
+            <View style={[s.statCard, { backgroundColor: STAT_BG, borderColor: BORDER }]}>
+              <Ionicons name="time-outline" size={22} color={BRAND_GREEN} />
+              <Text style={[s.statVal, { color: TEXT }]}>0.01s</Text>
+              <Text style={[s.statTitle, { color: TEXT }]}>Speed</Text>
+              <Text style={[s.statSub, { color: MUTED }]}>Lightning</Text>
+            </View>
+          </View>
+
+          {/* 3. Shortcuts Section */}
           <View style={s.section}>
             <Text style={[s.sectionTitle, { color: TEXT }]}>Shortcuts</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.shortcutsScroll}>
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(main)/pay')}>
-                <Ionicons name="arrow-up-circle" size={18} color={GREEN} />
+                <Ionicons name="arrow-up-circle" size={18} color={BRAND_GREEN} />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Pay Fees</Text>
               </Pressable>
 
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(payment)/lightning')}>
                 <Ionicons name="flash" size={18} color="#F59E0B" />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Lightning</Text>
               </Pressable>
 
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(main)/history')}>
-                <Ionicons name="receipt-outline" size={18} color={GREEN} />
+                <Ionicons name="receipt-outline" size={18} color={BRAND_GREEN} />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Receipts</Text>
               </Pressable>
 
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(main)/profile')}>
-                <Ionicons name="person-outline" size={18} color={GREEN} />
+                <Ionicons name="person-outline" size={18} color={BRAND_GREEN} />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Profile</Text>
               </Pressable>
             </ScrollView>
           </View>
 
-          {/* 3. Recent Activity Section */}
+          {/* 4. Recent Activity Section */}
           <View style={s.section}>
             <View style={s.sectionHead}>
               <Text style={[s.sectionTitle, { color: TEXT }]}>Recent Activity</Text>
               <Pressable onPress={() => router.push('/(main)/history')}>
-                <Text style={[s.seeAllTxt, { color: GREEN }]}>See all</Text>
+                <Text style={[s.seeAllTxt, { color: BRAND_GREEN }]}>See all</Text>
               </Pressable>
             </View>
 
-            <View style={[s.txListCard, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
+            <View style={[s.txListCard, { backgroundColor: STAT_BG, borderColor: BORDER }]}>
               {recentTxns.map((tx, i) => (
                 <View
                   key={tx.id}
@@ -159,7 +188,7 @@ export default function HomeScreen() {
                     <Ionicons
                       name={tx.method === 'lightning' ? 'flash' : 'card-outline'}
                       size={18}
-                      color={GREEN}
+                      color={BRAND_GREEN}
                     />
                   </View>
 
@@ -195,10 +224,10 @@ const s = StyleSheet.create({
     flex: 1,
   },
 
-  // Header Banner
+  // Top Header Banner
   topHeader: {
-    backgroundColor: '#1B7F3B',
-    paddingBottom: 24,
+    backgroundColor: BRAND_GREEN,
+    paddingBottom: 28,
   },
   headerSafeArea: {
     paddingHorizontal: 20,
@@ -218,7 +247,7 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
@@ -232,7 +261,7 @@ const s = StyleSheet.create({
   greetingTxt: {
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   userNameTxt: {
     fontSize: 18,
@@ -270,9 +299,9 @@ const s = StyleSheet.create({
     paddingBottom: 100, // accommodate floating tab bar
   },
   curvedSheet: {
-    marginTop: -16,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    marginTop: -20,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 24,
     gap: 20,
@@ -282,7 +311,7 @@ const s = StyleSheet.create({
 
   // 1. Balance Card
   balanceCard: {
-    backgroundColor: '#1B7F3B',
+    backgroundColor: BRAND_GREEN,
     borderRadius: 20,
     padding: 22,
     gap: 12,
@@ -295,7 +324,7 @@ const s = StyleSheet.create({
   balanceCardLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: 'rgba(255, 255, 255, 0.88)',
   },
   balanceCardAmt: {
     fontSize: 34,
@@ -316,6 +345,34 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#E2F7E2',
+  },
+
+  // 2. Stats Grid Row
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  statVal: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  statTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  statSub: {
+    fontSize: 10,
   },
 
   // Section

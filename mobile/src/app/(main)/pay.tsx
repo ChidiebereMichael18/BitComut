@@ -35,7 +35,7 @@ export default function PayScreen() {
   const TEXT   = isDark ? '#F0F0F0' : '#0D0D0D';
   const MUTED  = isDark ? '#4E644E' : '#6B7280';
   const INPUT  = isDark ? '#0E150E' : '#F6F6F6';
-  const GREEN  = '#1B7F3B';
+  const GREEN  = '#386635';
   const BTC    = '#F59E0B';
   const PH     = isDark ? '#2A3A2A' : '#C0C8C0';
 
