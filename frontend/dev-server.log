@@ -1,0 +1,169 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.56.1:3000
+✓ Ready in 954ms
+⚠ Warning: Next.js ignored package-lock.json in C:\Users\mucyu because it is outside the current Git repository (C:\Users\mucyu\Documents\Projects\BitComut).
+ To use this directory, set `turbopack.root` in your Next.js config.
+
+✓ Running next.config.ts took 87ms
+
+○ Compiling /dashboard/invoices/new ...
+ GET /dashboard/invoices/new 200 in 9.4s (next.js: 8.7s, application-code: 778ms)
+ GET /dashboard/invoices/new 200 in 132ms (next.js: 17ms, application-code: 115ms)
+ GET /dashboard/payments 200 in 884ms (next.js: 843ms, application-code: 41ms)
+ GET /dashboard/payments 200 in 54ms (next.js: 17ms, application-code: 36ms)
+ GET /dashboard 200 in 3.2s (next.js: 2.6s, application-code: 598ms)
+ GET /dashboard/students 200 in 822ms (next.js: 781ms, application-code: 41ms)
+ GET /dashboard/invoices 200 in 815ms (next.js: 775ms, application-code: 40ms)
+ GET /dashboard/settlements 200 in 422ms (next.js: 385ms, application-code: 37ms)
+ GET /dashboard/students 200 in 86ms (next.js: 50ms, application-code: 35ms)
+ GET /dashboard/students 200 in 98ms (next.js: 28ms, application-code: 70ms)
+ GET /dashboard/students 200 in 104ms (next.js: 21ms, application-code: 83ms)
+✓ Compiled in 270ms
+ GET /dashboard/students 200 in 103ms (next.js: 28ms, application-code: 75ms)
+✓ Compiled in 2.7s
+⨯ ReferenceError: initials is not defined
+    at Header (src\components\layout\header.tsx:171:54)
+  169 |             >
+  170 |               <Avatar className="size-7">
+> 171 |                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+      |                                                      ^
+  172 |               </Avatar>
+  173 |               <span className="hidden text-sm font-medium sm:inline">
+  174 |                 {university.shortName} {
+  digest: '2468902648'
+}
+ GET /dashboard/students 500 in 241ms (next.js: 19ms, application-code: 222ms)
+[browser] Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/template). 
+[browser] Uncaught ReferenceError: initials is not defined
+    at Header (src/components/layout/header.tsx:171:54)
+    at DashboardLayout (src\app\dashboard\layout.tsx:45:11)
+  169 |             >
+  170 |               <Avatar className="size-7">
+> 171 |                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+      |                                                      ^
+  172 |               </Avatar>
+  173 |               <span className="hidden text-sm font-medium sm:inline">
+  174 |                 {university.shortName}
+ GET /dashboard/students 200 in 345ms (next.js: 27ms, application-code: 317ms)
+ GET /dashboard/students 200 in 902ms (next.js: 270ms, application-code: 631ms)
+ GET /dashboard/students 200 in 542ms (next.js: 14ms, application-code: 528ms)
+ GET /dashboard/students 200 in 526ms (next.js: 28ms, application-code: 498ms)
+ GET /dashboard/students 200 in 415ms (next.js: 120ms, application-code: 296ms)
+ GET /dashboard/students 200 in 264ms (next.js: 32ms, application-code: 232ms)
+ GET /dashboard/students 200 in 222ms (next.js: 13ms, application-code: 209ms)
+ GET /dashboard/students 200 in 221ms (next.js: 14ms, application-code: 207ms)
+ GET /dashboard/students 200 in 240ms (next.js: 18ms, application-code: 222ms)
+ GET /dashboard/students 200 in 254ms (next.js: 11ms, application-code: 243ms)
+ GET /dashboard/students 200 in 252ms (next.js: 18ms, application-code: 235ms)
+ GET /dashboard/students 200 in 292ms (next.js: 13ms, application-code: 279ms)
+ GET /dashboard/students 200 in 310ms (next.js: 12ms, application-code: 298ms)
+ GET /dashboard/students 200 in 335ms (next.js: 11ms, application-code: 324ms)
+ GET /dashboard/students 200 in 272ms (next.js: 13ms, application-code: 259ms)
+ GET /dashboard/students 200 in 225ms (next.js: 15ms, application-code: 210ms)
+ GET /dashboard/students 200 in 215ms (next.js: 16ms, application-code: 199ms)
+ GET /dashboard/students 200 in 200ms (next.js: 13ms, application-code: 187ms)
+ GET /dashboard/students 200 in 256ms (next.js: 11ms, application-code: 245ms)
+ GET /dashboard/students 200 in 251ms (next.js: 8ms, application-code: 243ms)
+ GET /dashboard/students 200 in 276ms (next.js: 8ms, application-code: 268ms)
+ GET /dashboard/students 200 in 278ms (next.js: 15ms, application-code: 263ms)
+ GET /dashboard/students 200 in 333ms (next.js: 19ms, application-code: 314ms)
+ GET /dashboard/students 200 in 360ms (next.js: 30ms, application-code: 329ms)
+ GET /dashboard/students 200 in 248ms (next.js: 9ms, application-code: 239ms)
+ GET /dashboard/students 200 in 197ms (next.js: 14ms, application-code: 183ms)
+ GET /dashboard/students 200 in 199ms (next.js: 10ms, application-code: 189ms)
+ GET /dashboard/students 200 in 186ms (next.js: 11ms, application-code: 176ms)
+ GET /dashboard/students 200 in 176ms (next.js: 12ms, application-code: 164ms)
+ GET /dashboard/students 200 in 193ms (next.js: 7ms, application-code: 186ms)
+ GET /dashboard/students 200 in 198ms (next.js: 8ms, application-code: 190ms)
+ GET /dashboard/students 200 in 187ms (next.js: 9ms, application-code: 178ms)
+ GET /dashboard/students 200 in 191ms (next.js: 8ms, application-code: 183ms)
+ GET /dashboard/students 200 in 200ms (next.js: 11ms, application-code: 189ms)
+ GET /dashboard/students 200 in 207ms (next.js: 8ms, application-code: 199ms)
+ GET /dashboard/students 200 in 216ms (next.js: 8ms, application-code: 208ms)
+ GET /dashboard/students 200 in 216ms (next.js: 10ms, application-code: 206ms)
+ GET /dashboard/students 200 in 427ms (next.js: 11ms, application-code: 416ms)
+ GET /dashboard/students 200 in 499ms (next.js: 9ms, application-code: 491ms)
+ GET /dashboard/students 200 in 548ms (next.js: 7ms, application-code: 541ms)
+ GET /dashboard/students 200 in 559ms (next.js: 8ms, application-code: 551ms)
+ GET /dashboard/students 200 in 174ms (next.js: 45ms, application-code: 130ms)
+ GET /dashboard/students 200 in 73ms (next.js: 12ms, application-code: 61ms)
+✓ Compiled in 665ms
+ GET /dashboard/students 200 in 681ms (next.js: 192ms, application-code: 489ms)
+ GET /dashboard/students 200 in 524ms (next.js: 15ms, application-code: 508ms)
+ GET /dashboard/students 200 in 474ms (next.js: 55ms, application-code: 418ms)
+ GET /dashboard/students 200 in 454ms (next.js: 37ms, application-code: 416ms)
+ GET /dashboard/students 200 in 293ms (next.js: 20ms, application-code: 273ms)
+ GET /dashboard/students 200 in 318ms (next.js: 14ms, application-code: 304ms)
+ GET /dashboard/students 200 in 309ms (next.js: 14ms, application-code: 295ms)
+ GET /dashboard/students 200 in 351ms (next.js: 13ms, application-code: 337ms)
+ GET /dashboard/students 200 in 432ms (next.js: 31ms, application-code: 401ms)
+ GET /dashboard/students 200 in 352ms (next.js: 12ms, application-code: 340ms)
+ GET /dashboard/students 200 in 381ms (next.js: 55ms, application-code: 326ms)
+ GET /dashboard/students 200 in 249ms (next.js: 22ms, application-code: 227ms)
+ GET /dashboard/students 200 in 161ms (next.js: 16ms, application-code: 144ms)
+ GET /dashboard/students 200 in 171ms (next.js: 14ms, application-code: 157ms)
+ GET /dashboard/students 200 in 184ms (next.js: 18ms, application-code: 167ms)
+ GET /dashboard/students 200 in 240ms (next.js: 23ms, application-code: 217ms)
+ GET /dashboard/students 200 in 275ms (next.js: 44ms, application-code: 231ms)
+ GET /dashboard/students 200 in 207ms (next.js: 16ms, application-code: 191ms)
+ GET /dashboard/students 200 in 225ms (next.js: 12ms, application-code: 213ms)
+ GET /dashboard/students 200 in 219ms (next.js: 9ms, application-code: 209ms)
+ GET /dashboard/students 200 in 172ms (next.js: 11ms, application-code: 161ms)
+ GET /dashboard/students 200 in 187ms (next.js: 9ms, application-code: 178ms)
+ GET /dashboard/students 200 in 240ms (next.js: 9ms, application-code: 232ms)
+ GET /dashboard/students 200 in 278ms (next.js: 10ms, application-code: 268ms)
+ GET /dashboard/students 200 in 268ms (next.js: 62ms, application-code: 205ms)
+ GET /dashboard/students 200 in 236ms (next.js: 13ms, application-code: 223ms)
+ GET /dashboard/students 200 in 240ms (next.js: 7ms, application-code: 232ms)
+ GET /dashboard/students 200 in 257ms (next.js: 9ms, application-code: 248ms)
+ GET /dashboard/students 200 in 255ms (next.js: 16ms, application-code: 238ms)
+ GET /dashboard/students 200 in 215ms (next.js: 9ms, application-code: 206ms)
+ GET /dashboard/students 200 in 214ms (next.js: 8ms, application-code: 206ms)
+ GET /dashboard/students 200 in 219ms (next.js: 7ms, application-code: 212ms)
+ GET /dashboard/students 200 in 173ms (next.js: 7ms, application-code: 166ms)
+ GET /dashboard/students 200 in 179ms (next.js: 6ms, application-code: 173ms)
+ GET /dashboard/students 200 in 180ms (next.js: 8ms, application-code: 172ms)
+ GET /dashboard/students 200 in 258ms (next.js: 9ms, application-code: 249ms)
+ GET /dashboard/students 200 in 349ms (next.js: 7ms, application-code: 342ms)
+ GET /dashboard/students 200 in 483ms (next.js: 10ms, application-code: 473ms)
+ GET /dashboard/students 200 in 499ms (next.js: 22ms, application-code: 477ms)
+ GET /dashboard/students 200 in 490ms (next.js: 11ms, application-code: 479ms)
+ GET /dashboard/students 200 in 415ms (next.js: 10ms, application-code: 405ms)
+ GET /dashboard/students 200 in 265ms (next.js: 18ms, application-code: 247ms)
+ GET /dashboard/students 200 in 155ms (next.js: 11ms, application-code: 144ms)
+ GET /dashboard/students 200 in 81ms (next.js: 11ms, application-code: 71ms)
+✓ Compiled in 297ms
+ GET /dashboard/students 200 in 78ms (next.js: 17ms, application-code: 61ms)
+✓ Compiled in 460ms
+⚠ Fast Refresh had to perform a full reload when ./src/components/finance-profile-provider.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /dashboard/students 200 in 1624ms (next.js: 90ms, application-code: 1534ms)
+ GET /dashboard/students 200 in 1667ms (next.js: 244ms, application-code: 1423ms)
+ GET /dashboard/settings/profile 200 in 2.2s (next.js: 2.1s, application-code: 88ms)
+ GET /dashboard/settings/preferences 200 in 2.2s (next.js: 2.2s, application-code: 86ms)
+ GET /dashboard/settings 200 in 1108ms (next.js: 859ms, application-code: 250ms)
+ POST /dashboard/settings 200 in 291ms (next.js: 9ms, application-code: 281ms)
+  └─ ƒ clearTenantCookie() in 10ms src/app/actions/tenant.ts
+ GET /login 200 in 932ms (next.js: 800ms, application-code: 131ms)
+ GET /login 200 in 85ms (next.js: 18ms, application-code: 67ms)
+○ Compiling /forgot-password ...
+ GET /forgot-password 200 in 4.7s (next.js: 4.6s, application-code: 84ms)
+ GET /login 200 in 47ms (next.js: 18ms, application-code: 29ms)
+ GET /signup 200 in 801ms (next.js: 720ms, application-code: 81ms)
+ POST /signup 200 in 73ms (next.js: 16ms, application-code: 57ms)
+  └─ ƒ onboardTenant({"address":"fsdf","adminEmail":"mucyunejehirwaarsene@gmail.com","adminName":"kdifsdf","...":"16 items not stringified"}) in 8ms src/app/actions/tenant.ts
+ GET /dashboard 200 in 648ms (next.js: 74ms, application-code: 574ms)
+ GET /dashboard/students 200 in 46ms (next.js: 15ms, application-code: 32ms)
+ GET /dashboard/payments 200 in 88ms (next.js: 56ms, application-code: 32ms)
+ GET /dashboard/settlements 200 in 85ms (next.js: 56ms, application-code: 29ms)
+ GET /dashboard/invoices 200 in 89ms (next.js: 50ms, application-code: 39ms)
+ GET /dashboard/students 200 in 70ms (next.js: 7ms, application-code: 63ms)
+ GET /dashboard/payments 200 in 65ms (next.js: 13ms, application-code: 52ms)
+ GET /dashboard/students 200 in 58ms (next.js: 7ms, application-code: 51ms)
+ GET /dashboard/invoices 200 in 66ms (next.js: 7ms, application-code: 59ms)
+ GET /dashboard/invoices/new 200 in 101ms (next.js: 63ms, application-code: 38ms)
+ GET /dashboard/invoices 200 in 48ms (next.js: 6ms, application-code: 41ms)
