@@ -19,6 +19,7 @@ export const COUNTRIES: Country[] = [
     btcRate: 138500000,
     rateFormatted: 'FRw 138.5M',
     universities: [
+      'Digital Art University (DAU)',
       'Carnegie Mellon University Africa (CMU-Africa)',
       'University of Rwanda (UR) - Kigali Campus',
       'African Leadership University (ALU) - Rwanda',

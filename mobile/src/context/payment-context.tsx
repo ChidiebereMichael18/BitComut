@@ -30,47 +30,35 @@ type PaymentContextType = {
 const PaymentContext = createContext<PaymentContextType | null>(null);
 
 const MOCK_FEES = [
-  { label: '2024/25 School Fees', amount: 285000, currency: 'NGN', dueDate: '2025-02-28' },
-  { label: 'Accommodation Levy', amount: 45000, currency: 'NGN', dueDate: '2025-01-31' },
+  { label: '2024/25 Semester Tuition', amount: 1500000, currency: 'RWF', dueDate: '2025-03-31' },
+  { label: 'Library & Tech Levy', amount: 120000, currency: 'RWF', dueDate: '2025-02-15' },
 ];
 
 const MOCK_TRANSACTIONS: Transaction[] = [
   {
     id: 'TXN-001-2024',
-    university: 'University of Lagos',
-    studentId: 'UL/2021/ENG/0042',
-    amount: 285000,
-    currency: 'NGN',
-    btcAmount: '0.00341',
+    university: 'Digital Art University (DAU)',
+    studentId: 'DAU/2024/CS/0042',
+    amount: 1500000,
+    currency: 'RWF',
+    btcAmount: '0.01083',
     method: 'lightning',
     status: 'success',
     date: '2024-10-15',
-    description: '2023/24 School Fees',
+    description: '2024/25 Semester Tuition',
     txHash: 'bc1q9x...k4f2',
   },
   {
     id: 'TXN-002-2024',
-    university: 'University of Lagos',
-    studentId: 'UL/2021/ENG/0042',
-    amount: 45000,
-    currency: 'NGN',
-    btcAmount: '0.000538',
-    method: 'card',
+    university: 'Digital Art University (DAU)',
+    studentId: 'DAU/2024/CS/0042',
+    amount: 120000,
+    currency: 'RWF',
+    btcAmount: '0.000866',
+    method: 'lightning',
     status: 'success',
     date: '2024-09-02',
-    description: 'Accommodation Levy',
-  },
-  {
-    id: 'TXN-003-2024',
-    university: 'University of Lagos',
-    studentId: 'UL/2021/ENG/0042',
-    amount: 120000,
-    currency: 'NGN',
-    btcAmount: '0.001435',
-    method: 'lightning',
-    status: 'failed',
-    date: '2024-08-18',
-    description: 'Faculty Development Fee',
+    description: 'Library & Tech Levy',
   },
 ];
 

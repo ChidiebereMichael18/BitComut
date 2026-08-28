@@ -22,8 +22,8 @@ const BRAND_GREEN = '#386635'; // Forest Green
 export default function LoginScreen() {
   const { login } = useAuth();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('alain.niyonzima@student.dau.edu');
+  const [password, setPassword] = useState('Rwanda@123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

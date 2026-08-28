@@ -30,12 +30,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 // Mock user used when logging in (existing account)
 const MOCK_LOGIN_USER: User = {
-  name: 'Jean-Paul Habimana',
-  email: 'jeanpaul@example.com',
+  name: 'Alain Niyonzima',
+  email: 'alain.niyonzima@student.dau.edu',
   country: 'Rwanda (Kigali)',
-  university: 'Carnegie Mellon University Africa (CMU-Africa)',
-  studentId: 'CMU/2024/CS/0189',
-  avatarInitials: 'JH',
+  university: 'Digital Art University (DAU)',
+  studentId: 'DAU/2024/CS/0042',
+  avatarInitials: 'AN',
 };
 
 function makeInitials(name: string): string {
