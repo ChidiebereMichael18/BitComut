@@ -22,15 +22,15 @@ import { useAuth } from '@/context/auth-context';
 const BRAND_GREEN = '#386635'; // Forest Green
 
 export default function SignupScreen() {
-  const { login } = useAuth();
+  const { signup } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
-  const [university, setUniversity] = useState('');
-  const [studentId, setStudentId] = useState('');
+  const [university, setUniversity] = useState('Digital Art University (DAU)');
+  const [studentId, setStudentId] = useState('DAU-2024-8841');
 
   const [countryModal, setCountryModal] = useState(false);
   const [uniModal, setUniModal] = useState(false);
@@ -44,14 +44,21 @@ export default function SignupScreen() {
   );
 
   const handleSignup = async () => {
-    if (!name.trim() || !email.trim() || !password.trim() || !university) {
+    if (!name.trim() || !email.trim() || !password.trim() || !university || !studentId.trim()) {
       setError('Please fill in all required fields.');
       return;
     }
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await signup({
+        name,
+        email,
+        password,
+        country: selectedCountry.name,
+        university,
+        studentId,
+      });
       router.replace('/(main)');
     } catch {
       setError('Could not create account. Please try again.');
@@ -210,6 +217,19 @@ export default function SignupScreen() {
                   </Text>
                   <Ionicons name="chevron-down" size={16} color="#667766" />
                 </Pressable>
+              </View>
+
+              {/* Student Record / ID Number */}
+              <View style={s.field}>
+                <Text style={s.label}>Student Record / ID Number</Text>
+                <TextInput
+                  style={s.input}
+                  placeholder="e.g. DAU-2024-8841"
+                  placeholderTextColor="#99A899"
+                  value={studentId}
+                  onChangeText={setStudentId}
+                  autoCapitalize="characters"
+                />
               </View>
 
               {/* Password */}

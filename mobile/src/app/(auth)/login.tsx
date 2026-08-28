@@ -74,6 +74,21 @@ export default function LoginScreen() {
                 </View>
               ) : null}
 
+              {/* University Field */}
+              <View style={s.field}>
+                <Text style={s.label}>University</Text>
+                <View style={s.inputRow}>
+                  <Ionicons name="school-outline" size={18} color="#386635" style={{ marginRight: 8 }} />
+                  <TextInput
+                    style={s.inputFlex}
+                    value="Digital Art University (DAU)"
+                    editable={false}
+                    pointerEvents="none"
+                  />
+                  <Ionicons name="checkmark-circle" size={18} color="#386635" />
+                </View>
+              </View>
+
               {/* Email Field */}
               <View style={s.field}>
                 <Text style={s.label}>Email Address</Text>
