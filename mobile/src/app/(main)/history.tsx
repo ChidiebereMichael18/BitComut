@@ -6,26 +6,25 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Ionicons } from '@/components/ui/icon';
 import { useAuth } from '@/context/auth-context';
-import { usePayment, Transaction } from '@/context/payment-context';
+import { usePayment } from '@/context/payment-context';
 import { getCountryConfig } from '@/constants/universities';
+import type { PaymentStatus, Payment } from '@/lib/types';
 
-type Filter = 'all' | 'success' | 'pending' | 'failed';
+type Filter = 'all' | 'Paid' | 'Pending' | 'Failed';
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all',     label: 'All' },
-  { key: 'success', label: 'Paid' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'failed',  label: 'Failed' },
+  { key: 'Paid',    label: 'Paid' },
+  { key: 'Pending', label: 'Pending' },
+  { key: 'Failed',  label: 'Failed' },
 ];
 
 export default function HistoryScreen() {
-  const isDark = useColorScheme() === 'dark';
   const { user } = useAuth();
   const { transactions } = usePayment();
   const [filter, setFilter] = useState<Filter>('all');
@@ -48,15 +47,14 @@ export default function HistoryScreen() {
     ? transactions
     : transactions.filter((t) => t.status === filter);
 
-  const statusColor = (s: Transaction['status']) =>
-    s === 'success' ? SUCCESS : s === 'failed' ? DANGER : WARN;
+  const statusColor = (s: PaymentStatus) =>
+    s === 'Paid' || s === 'Settled' ? SUCCESS : s === 'Failed' ? DANGER : WARN;
 
-  const statusLabel = (s: Transaction['status']) =>
-    s === 'success' ? 'Paid' : s === 'failed' ? 'Failed' : 'Pending';
+  const statusLabel = (s: PaymentStatus) => s;
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={BG} />
+      <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <SafeAreaView style={s.safe} edges={['top']}>
 
         {/* Header */}
@@ -101,20 +99,20 @@ export default function HistoryScreen() {
               </Text>
             </View>
           ) : (
-            filtered.map((tx) => (
+            filtered.map((tx: Payment) => (
               <View key={tx.id} style={[s.txCard, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
                 {/* Top header row */}
                 <View style={s.txTop}>
                   <View style={[s.txIcon, { backgroundColor: CHIP_BG }]}>
                     <Ionicons
-                      name={tx.method === 'lightning' ? 'flash' : 'card-outline'}
+                      name="flash"
                       size={20}
                       color={GREEN}
                     />
                   </View>
                   <View style={s.txMeta}>
-                    <Text style={[s.txDesc, { color: TEXT }]}>{tx.description}</Text>
-                    <Text style={[s.txId, { color: MUTED }]}>{tx.id}</Text>
+                    <Text style={[s.txDesc, { color: TEXT }]}>{tx.invoiceId || 'Tuition Payment'}</Text>
+                    <Text style={[s.txId, { color: MUTED }]}>{tx.reference || tx.id}</Text>
                   </View>
                   <View style={[s.statusBadge, { backgroundColor: CHIP_BG }]}>
                     <Text style={[s.txStatus, { color: statusColor(tx.status) }]}>
@@ -129,10 +127,9 @@ export default function HistoryScreen() {
                 {/* Detail rows */}
                 <View style={s.txDetails}>
                   <Detail label="Date"       value={tx.date} MUTED={MUTED} TEXT={TEXT} />
-                  <Detail label="Amount"     value={`${currencySymbol}${tx.amount.toLocaleString()}`} MUTED={MUTED} TEXT={TEXT} bold />
-                  <Detail label="BTC Amount" value={`${tx.btcAmount} BTC`} MUTED={MUTED} TEXT="#F59E0B" />
-                  <Detail label="Method"     value={tx.method === 'lightning' ? 'Lightning Network ⚡' : 'Bank Card'} MUTED={MUTED} TEXT={TEXT} />
-                  {tx.txHash && <Detail label="Tx Hash" value={tx.txHash} MUTED={MUTED} TEXT={MUTED} />}
+                  <Detail label="Amount"     value={`${tx.currency} ${tx.amount.toLocaleString()}`} MUTED={MUTED} TEXT={TEXT} bold />
+                  <Detail label="BTC Sats"   value={`${tx.btcSats?.toLocaleString() ?? 0} sats`} MUTED={MUTED} TEXT="#F59E0B" />
+                  <Detail label="Method"     value={`${tx.method} ⚡`} MUTED={MUTED} TEXT={TEXT} />
                 </View>
               </View>
             ))
@@ -194,7 +191,7 @@ const s = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 110, // space for floating tab bar
+    paddingBottom: 110,
     gap: 12,
   },
 

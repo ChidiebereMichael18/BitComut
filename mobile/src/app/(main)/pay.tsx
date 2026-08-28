@@ -25,7 +25,7 @@ const FEE_TYPES = [
 ];
 
 export default function PayScreen() {
-  const { setPaymentDetails, btcRate } = usePayment();
+  const { setPaymentDetails } = usePayment();
 
   const BG     = '#FFFFFF';
   const SURF   = '#F8FAF8';
@@ -52,14 +52,15 @@ export default function PayScreen() {
     u.toLowerCase().includes(uniSearch.toLowerCase()),
   );
 
-  const btcEquiv = selectedFee ? (selectedFee.amount / btcRate).toFixed(6) : '—';
+  const BTC_RATE = 138500000;
+  const btcEquiv = selectedFee ? (selectedFee.amount / BTC_RATE).toFixed(6) : '—';
 
   const canProceed1 = !!university;
   const canProceed2 = !!selectedFee && studentId.trim().length > 0;
 
   const handlePay = () => {
     if (!selectedFee || !university) return;
-    setPaymentDetails(university, studentId, selectedFee.amount, 'NGN');
+    setPaymentDetails(selectedFee.label, university, studentId, selectedFee.amount, 'RWF');
     router.push('/(payment)/method');
   };
 

@@ -1,12 +1,25 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  studentLogin,
+  studentLogout,
+  studentMe,
+  studentRegister,
+} from '@/lib/api/student';
+import { clearStudentAuthToken } from '@/lib/api/client';
+import type { Student, Tenant } from '@/lib/types';
+import { DEFAULT_SLUG } from '@/lib/constants';
 
-export type User = {
+// ── Shape of user we expose to the UI ──────────────────────────────────────
+export type AppUser = {
   name: string;
   email: string;
   country: string;
   university: string;
   studentId: string;
   avatarInitials: string;
+  // raw data from backend
+  student: Student;
+  tenant: Tenant;
 };
 
 type SignupData = {
@@ -19,24 +32,15 @@ type SignupData = {
 };
 
 type AuthContextType = {
-  user: User | null;
+  user: AppUser | null;
   isLoggedIn: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (data: SignupData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-// Mock user used when logging in (existing account)
-const MOCK_LOGIN_USER: User = {
-  name: 'Alain Niyonzima',
-  email: 'alain.niyonzima@student.dau.edu',
-  country: 'Rwanda (Kigali)',
-  university: 'Digital Art University (DAU)',
-  studentId: 'DAU/2024/CS/0042',
-  avatarInitials: 'AN',
-};
 
 function makeInitials(name: string): string {
   return name
@@ -48,32 +52,64 @@ function makeInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+function buildAppUser(student: Student, tenant: Tenant): AppUser {
+  return {
+    name: student.name,
+    email: student.email,
+    country: tenant.country ?? 'Rwanda (Kigali)',
+    university: tenant.name,
+    studentId: student.id,
+    avatarInitials: makeInitials(student.name) || 'BC',
+    student,
+    tenant,
+  };
+}
 
-  const login = async (_email: string, _password: string) => {
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    setUser(MOCK_LOGIN_USER);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // On mount — restore session from AsyncStorage
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await studentMe();
+        if (me) setUser(buildAppUser(me.student, me.tenant));
+      } catch {
+        // no valid session
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const res = await studentLogin(email, password, DEFAULT_SLUG);
+    setUser(buildAppUser(res.student, res.tenant));
   };
 
   const signup = async (data: SignupData) => {
-    // Simulate API call — store exactly what the user entered
-    await new Promise((r) => setTimeout(r, 1200));
-    setUser({
-      name: data.name,
-      email: data.email,
-      country: data.country,
-      university: data.university,
+    const res = await studentRegister({
+      tenantSlug: DEFAULT_SLUG,
       studentId: data.studentId,
-      avatarInitials: makeInitials(data.name) || 'BC',
+      email: data.email,
+      password: data.password,
+      name: data.name,
     });
+    setUser(buildAppUser(res.student, res.tenant));
   };
 
-  const logout = () => setUser(null);
+  const logout = async () => {
+    try {
+      await studentLogout();
+    } catch {
+      await clearStudentAuthToken();
+    }
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, loading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

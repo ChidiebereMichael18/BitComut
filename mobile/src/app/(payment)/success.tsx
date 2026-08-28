@@ -7,7 +7,8 @@ import { usePayment } from '@/context/payment-context';
 
 export default function SuccessScreen() {
   const isDark = useColorScheme() === 'dark';
-  const { lastTransaction } = usePayment();
+  const { lastPayResponse } = usePayment();
+  const lastTransaction = lastPayResponse?.payment;
 
   const BG      = '#FFFFFF';
   const SURF    = '#F8FAF8';
@@ -62,19 +63,13 @@ export default function SuccessScreen() {
               s.card,
               { backgroundColor: SURF, borderColor: BORDER, opacity: opacityAnim, transform: [{ translateY: slideUpAnim }] },
             ]}>
-            <Row label="Amount Paid" value={`₦${lastTransaction?.amount.toLocaleString() ?? '—'}`} TEXT={TEXT} MUTED={MUTED} bold />
+            <Row label="Amount Paid" value={lastTransaction ? `${lastTransaction.currency} ${lastTransaction.amount.toLocaleString()}` : '—'} TEXT={TEXT} MUTED={MUTED} bold />
             <View style={[s.divider, { backgroundColor: BORDER }]} />
-            <Row label="BTC Amount" value={`${lastTransaction?.btcAmount ?? '—'} BTC`} TEXT={BTC} MUTED={MUTED} />
+            <Row label="BTC Sats" value={lastTransaction?.btcSats ? `${lastTransaction.btcSats.toLocaleString()} sats` : '—'} TEXT={BTC} MUTED={MUTED} />
             <View style={[s.divider, { backgroundColor: BORDER }]} />
-            <Row label="University" value={lastTransaction?.university ?? '—'} TEXT={TEXT} MUTED={MUTED} />
+            <Row label="Student ID" value={lastTransaction?.studentId ?? '—'} TEXT={TEXT} MUTED={MUTED} />
             <View style={[s.divider, { backgroundColor: BORDER }]} />
-            <Row label="Transaction ID" value={lastTransaction?.id ?? '—'} TEXT={MUTED} MUTED={MUTED} mono />
-            {lastTransaction?.txHash && (
-              <>
-                <View style={[s.divider, { backgroundColor: BORDER }]} />
-                <Row label="Tx Hash" value={lastTransaction.txHash} TEXT={SUCCESS} MUTED={MUTED} mono />
-              </>
-            )}
+            <Row label="Reference" value={lastTransaction?.reference ?? lastTransaction?.id ?? '—'} TEXT={MUTED} MUTED={MUTED} mono />
             <View style={[s.divider, { backgroundColor: BORDER }]} />
             <View style={s.row}>
               <Text style={[s.rowLabel, { color: MUTED }]}>Status</Text>

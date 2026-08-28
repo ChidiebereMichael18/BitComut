@@ -18,14 +18,17 @@ const BRAND_GREEN = '#386635'; // Exact Forest Green
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const { pendingFees, transactions } = usePayment();
+  const { pendingFees, transactions, balance } = usePayment();
 
-  // Dynamic Country Currency & Live BTC Rate Sync
-  const countryConfig  = getCountryConfig(user?.country);
+  // Use real currency from tenant, fall back to country config
+  const currency = balance?.currency ?? pendingFees[0]?.currency ?? 'RWF';
+  const countryConfig  = getCountryConfig(user?.country ?? user?.tenant?.country ?? 'Rwanda');
   const btcRate        = countryConfig.btcRate;
   const currencySymbol = countryConfig.currencySymbol;
 
-  const totalDue   = pendingFees.reduce((s, f) => s + f.amount, 0);
+  // Use real balance data if available, otherwise derive from pending fees
+  const totalDue   = balance?.outstanding ?? pendingFees.reduce((s, f) => s + f.amount, 0);
+  const feeCount   = balance?.unpaidInvoices ?? pendingFees.length;
   const btcEquiv   = (totalDue / btcRate).toFixed(5);
   const firstName  = user?.name?.split(' ')[0] ?? 'Student';
   const avatarInit = user?.avatarInitials ?? 'BC';
@@ -61,7 +64,7 @@ export default function HomeScreen() {
               {/* Stat 1 */}
               <View style={s.glassStatCard}>
                 <Ionicons name="school-outline" size={18} color="#FFFFFF" />
-                <Text style={s.glassStatVal}>{pendingFees.length}</Text>
+                <Text style={s.glassStatVal}>{feeCount}</Text>
                 <Text style={s.glassStatLabel}>FEES DUE</Text>
               </View>
 
@@ -168,7 +171,7 @@ export default function HomeScreen() {
                 ]}>
                 <View style={s.activityIconBox}>
                   <Ionicons
-                    name={tx.method === 'lightning' ? 'flash' : 'card-outline'}
+                    name={tx.method === 'Lightning Network' ? 'flash' : 'card-outline'}
                     size={18}
                     color={BRAND_GREEN}
                   />
@@ -176,7 +179,7 @@ export default function HomeScreen() {
 
                 <View style={s.activityMain}>
                   <Text style={s.activityDesc} numberOfLines={1}>
-                    {tx.description}
+                    {tx.invoiceId}
                   </Text>
                   <Text style={s.activityDate}>{tx.date}</Text>
                 </View>

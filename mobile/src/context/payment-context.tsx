@@ -1,106 +1,126 @@
-import React, { createContext, useContext, useState } from 'react';
-
-export type Transaction = {
-  id: string;
-  university: string;
-  studentId: string;
-  amount: number;
-  currency: string;
-  btcAmount: string;
-  method: 'lightning' | 'card';
-  status: 'pending' | 'success' | 'failed';
-  date: string;
-  description: string;
-  txHash?: string;
-};
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  getMyInvoices,
+  getMyPayments,
+  getMyBalance,
+  payInvoice,
+  type StudentBalance,
+  type StudentPayResponse,
+} from '@/lib/api/student';
+import type { Invoice, Payment } from '@/lib/types';
+import { useAuth } from '@/context/auth-context';
 
 type PaymentContextType = {
+  // data
+  invoices: Invoice[];
   pendingFees: { label: string; amount: number; currency: string; dueDate: string }[];
+  transactions: Payment[];
+  balance: StudentBalance | null;
+  lastPayResponse: StudentPayResponse | null;
+  // selection state for pay flow
+  selectedInvoiceId: string;
   selectedUniversity: string;
   selectedStudentId: string;
   selectedAmount: number;
   selectedCurrency: string;
-  btcRate: number;
-  transactions: Transaction[];
-  lastTransaction: Transaction | null;
-  setPaymentDetails: (u: string, sid: string, amt: number, cur: string) => void;
-  addTransaction: (t: Omit<Transaction, 'id' | 'date'>) => Transaction;
+  // actions
+  setPaymentDetails: (invoiceId: string, u: string, sid: string, amt: number, cur: string) => void;
+  paySelectedInvoice: () => Promise<StudentPayResponse>;
+  refresh: () => Promise<void>;
+  loading: boolean;
 };
 
 const PaymentContext = createContext<PaymentContextType | null>(null);
 
-const MOCK_FEES = [
-  { label: '2024/25 Semester Tuition', amount: 1500000, currency: 'RWF', dueDate: '2025-03-31' },
-  { label: 'Library & Tech Levy', amount: 120000, currency: 'RWF', dueDate: '2025-02-15' },
-];
-
-const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'TXN-001-2024',
-    university: 'Digital Art University (DAU)',
-    studentId: 'DAU/2024/CS/0042',
-    amount: 1500000,
-    currency: 'RWF',
-    btcAmount: '0.01083',
-    method: 'lightning',
-    status: 'success',
-    date: '2024-10-15',
-    description: '2024/25 Semester Tuition',
-    txHash: 'bc1q9x...k4f2',
-  },
-  {
-    id: 'TXN-002-2024',
-    university: 'Digital Art University (DAU)',
-    studentId: 'DAU/2024/CS/0042',
-    amount: 120000,
-    currency: 'RWF',
-    btcAmount: '0.000866',
-    method: 'lightning',
-    status: 'success',
-    date: '2024-09-02',
-    description: 'Library & Tech Levy',
-  },
-];
-
 export function PaymentProvider({ children }: { children: React.ReactNode }) {
+  const { isLoggedIn } = useAuth();
+
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [transactions, setTransactions] = useState<Payment[]>([]);
+  const [balance, setBalance] = useState<StudentBalance | null>(null);
+  const [lastPayResponse, setLastPayResponse] = useState<StudentPayResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // pay flow selection state
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState('');
   const [selectedUniversity, setSelectedUniversity] = useState('');
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [selectedAmount, setSelectedAmount] = useState(0);
-  const [selectedCurrency, setSelectedCurrency] = useState('NGN');
-  const [transactions, setTransactions] = useState<Transaction[]>(MOCK_TRANSACTIONS);
-  const [lastTransaction, setLastTransaction] = useState<Transaction | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState('RWF');
 
-  const setPaymentDetails = (u: string, sid: string, amt: number, cur: string) => {
+  const refresh = useCallback(async () => {
+    if (!isLoggedIn) return;
+    setLoading(true);
+    try {
+      const [inv, pmt, bal] = await Promise.all([
+        getMyInvoices(),
+        getMyPayments(),
+        getMyBalance(),
+      ]);
+      setInvoices(inv);
+      setTransactions(pmt);
+      setBalance(bal);
+    } catch {
+      // network error — keep stale data
+    } finally {
+      setLoading(false);
+    }
+  }, [isLoggedIn]);
+
+  // Fetch on login
+  useEffect(() => {
+    if (isLoggedIn) refresh();
+  }, [isLoggedIn, refresh]);
+
+  // Derive pending fees (unpaid / overdue invoices)
+  const pendingFees = invoices
+    .filter((i) => i.status === 'Unpaid' || i.status === 'Overdue' || i.status === 'Partially Paid')
+    .map((i) => ({
+      label: i.description || i.type,
+      amount: i.amount - i.amountPaid,
+      currency: i.currency,
+      dueDate: i.dueDate,
+    }));
+
+  const setPaymentDetails = (
+    invoiceId: string,
+    u: string,
+    sid: string,
+    amt: number,
+    cur: string
+  ) => {
+    setSelectedInvoiceId(invoiceId);
     setSelectedUniversity(u);
     setSelectedStudentId(sid);
     setSelectedAmount(amt);
     setSelectedCurrency(cur);
   };
 
-  const addTransaction = (t: Omit<Transaction, 'id' | 'date'>): Transaction => {
-    const newTx: Transaction = {
-      ...t,
-      id: `TXN-${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-    setLastTransaction(newTx);
-    return newTx;
+  const paySelectedInvoice = async (): Promise<StudentPayResponse> => {
+    const res = await payInvoice(selectedInvoiceId);
+    setLastPayResponse(res);
+    // refresh balances after payment
+    await refresh();
+    return res;
   };
 
   return (
     <PaymentContext.Provider
       value={{
-        pendingFees: MOCK_FEES,
+        invoices,
+        pendingFees,
+        transactions,
+        balance,
+        lastPayResponse,
+        selectedInvoiceId,
         selectedUniversity,
         selectedStudentId,
         selectedAmount,
         selectedCurrency,
-        btcRate: 83620000, // 1 BTC = 83,620,000 NGN (mock)
-        transactions,
-        lastTransaction,
         setPaymentDetails,
-        addTransaction,
+        paySelectedInvoice,
+        refresh,
+        loading,
       }}>
       {children}
     </PaymentContext.Provider>

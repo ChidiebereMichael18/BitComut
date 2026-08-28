@@ -32,7 +32,7 @@ export default function ProfileScreen() {
   const SUCCESS  = '#2B7A28';
   const DANGER   = '#DC2626';
 
-  const txCount = transactions.filter((t) => t.status === 'success').length;
+  const txCount = transactions.filter((t) => t.status === 'Paid' || t.status === 'Settled').length;
 
   const handleLogout = () => {
     logout();
