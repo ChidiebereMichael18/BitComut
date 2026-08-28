@@ -11,43 +11,48 @@ const TAB_CONFIG: {
   icon: IoniconsName;
   iconFocused: IoniconsName;
 }[] = [
-  { name: 'index',   label: 'Home',    icon: 'home-outline',            iconFocused: 'home' },
-  { name: 'pay',     label: 'Pay',     icon: 'arrow-up-circle-outline', iconFocused: 'arrow-up-circle' },
-  { name: 'history', label: 'History', icon: 'time-outline',            iconFocused: 'time' },
-  { name: 'profile', label: 'Profile', icon: 'person-outline',          iconFocused: 'person' },
+  { name: 'index',   label: 'Dashboard', icon: 'home-outline',            iconFocused: 'home' },
+  { name: 'pay',     label: 'Pay Fees',  icon: 'arrow-up-circle-outline', iconFocused: 'arrow-up-circle' },
+  { name: 'history', label: 'History',   icon: 'time-outline',            iconFocused: 'time' },
+  { name: 'profile', label: 'Profile',   icon: 'person-outline',          iconFocused: 'person' },
 ];
 
 export default function MainLayout() {
   const isDark = useColorScheme() === 'dark';
 
-  const tabBg       = isDark ? '#080E08' : '#FFFFFF';
-  const tabBorder   = isDark ? '#1C271C' : '#E5E7EB';
+  const tabBg       = isDark ? '#0F170F' : '#FFFFFF';
+  const tabBorder   = isDark ? '#1C2B1C' : '#E5E7EB';
   const activeCol   = '#1B7F3B'; // Brand Green
-  const inactiveCol = isDark ? '#6B7280' : '#9CA3AF';
+  const inactiveCol = isDark ? '#6B7280' : '#8E8E93';
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
+          position: 'absolute',
+          bottom: Platform.OS === 'ios' ? 24 : 16,
+          left: 16,
+          right: 16,
+          height: 66,
+          borderRadius: 33,
           backgroundColor: tabBg,
-          borderTopColor: tabBorder,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          height: Platform.OS === 'ios' ? 88 : 72,
-          paddingTop: 10,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-          elevation: 10,
+          borderColor: tabBorder,
+          borderWidth: StyleSheet.hairlineWidth,
+          paddingTop: 8,
+          paddingBottom: 8,
+          elevation: 12,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.08,
-          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.12,
+          shadowRadius: 16,
         },
         tabBarActiveTintColor: activeCol,
         tabBarInactiveTintColor: inactiveCol,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginTop: 4,
+          marginTop: 2,
         },
       }}>
       {TAB_CONFIG.map((tab) => (
@@ -59,7 +64,7 @@ export default function MainLayout() {
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
                 name={focused ? tab.iconFocused : tab.icon}
-                size={24}
+                size={23}
                 color={color}
               />
             ),

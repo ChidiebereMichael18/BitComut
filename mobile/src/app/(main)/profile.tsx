@@ -1,38 +1,37 @@
-import { Ionicons } from '@/components/ui/icon';
-import { router } from 'expo-router';
+import React from 'react';
 import {
   Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Switch,
   Text,
   View,
   useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { router } from 'expo-router';
+import { Ionicons } from '@/components/ui/icon';
 import { useAuth } from '@/context/auth-context';
 import { usePayment } from '@/context/payment-context';
+import { getCountryConfig } from '@/constants/universities';
 
 export default function ProfileScreen() {
   const isDark = useColorScheme() === 'dark';
   const { user, logout } = useAuth();
   const { transactions } = usePayment();
 
-  const BG     = isDark ? '#070C07' : '#FFFFFF';
-  const SURF   = isDark ? '#0E150E' : '#F6F6F6';
-  const CARD   = isDark ? '#131A13' : '#F0F0F0';
-  const BORDER = isDark ? '#1C271C' : '#E4E4E4';
-  const TEXT   = isDark ? '#F0F0F0' : '#0D0D0D';
-  const MUTED  = isDark ? '#4E644E' : '#6B7280';
-  const GREEN  = '#1B7F3B';
-  const SUCCESS = isDark ? '#22C55E' : '#16A34A';
-  const DANGER  = isDark ? '#EF4444' : '#DC2626';
+  const countryConfig = getCountryConfig(user?.country);
 
-  const totalPaid = transactions
-    .filter((t) => t.status === 'success')
-    .reduce((sum, t) => sum + t.amount, 0);
+  const BG       = isDark ? '#070C07' : '#F4F6F4';
+  const CARD_BG  = isDark ? '#0E150E' : '#FFFFFF';
+  const STAT_BG  = isDark ? '#131D13' : '#F0F5F0';
+  const BORDER   = isDark ? '#1C271C' : '#E5E7EB';
+  const TEXT     = isDark ? '#F0F0F0' : '#111827';
+  const MUTED    = isDark ? '#7E967E' : '#6B7280';
+  const GREEN    = '#1B7F3B';
+  const SUCCESS  = isDark ? '#22C55E' : '#16A34A';
+  const DANGER   = isDark ? '#EF4444' : '#DC2626';
+
   const txCount = transactions.filter((t) => t.status === 'success').length;
 
   const handleLogout = () => {
@@ -44,128 +43,305 @@ export default function ProfileScreen() {
     <View style={[s.root, { backgroundColor: BG }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={BG} />
       <SafeAreaView style={s.safe} edges={['top']}>
+
+        {/* Top Header */}
+        <View style={s.header}>
+          <Text style={[s.headerTitle, { color: TEXT }]}>Profile</Text>
+          <Pressable style={s.settingsBtn}>
+            <Ionicons name="settings-outline" size={22} color={TEXT} />
+          </Pressable>
+        </View>
+
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-          {/* ── Identity block ── */}
-          <View style={[s.idBlock, { backgroundColor: SURF, borderColor: BORDER }]}>
-            <View style={[s.avatar, { backgroundColor: GREEN }]}>
-              <Text style={s.avatarTxt}>{user?.avatarInitials ?? 'BC'}</Text>
+          {/* Centered Profile Hero Card */}
+          <View style={[s.heroCard, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
+
+            {/* Avatar with Verified Badge */}
+            <View style={s.avatarWrapper}>
+              <View style={[s.avatarCircle, { backgroundColor: GREEN }]}>
+                <Text style={s.avatarTxt}>{user?.avatarInitials ?? 'BC'}</Text>
+              </View>
+              <View style={s.badgeCircle}>
+                <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+              </View>
             </View>
-            <View style={s.idInfo}>
-              <Text style={[s.idName, { color: TEXT }]}>{user?.name}</Text>
-              <Text style={[s.idEmail, { color: MUTED }]}>{user?.email}</Text>
+
+            {/* Name & Email */}
+            <Text style={[s.userName, { color: TEXT }]}>{user?.name?.toUpperCase() ?? 'STUDENT'}</Text>
+            <Text style={[s.userEmail, { color: MUTED }]}>{user?.email}</Text>
+
+            {/* Approved Status Tag */}
+            <View style={[s.statusTag, { backgroundColor: GREEN }]}>
+              <Ionicons name="checkmark-circle" size={14} color="#FFFFFF" />
+              <Text style={s.statusTagTxt}>Approved Student</Text>
             </View>
+
+            {/* Rating Subtitle */}
+            <View style={s.ratingRow}>
+              <Ionicons name="star" size={14} color="#F59E0B" />
+              <Text style={[s.ratingTxt, { color: MUTED }]}>Verified Bursar Account</Text>
+            </View>
+
           </View>
 
-          {/* ── Stats ── */}
+          {/* 3 Grid Stats Row */}
           <View style={s.statsRow}>
-            <Stat label="Total paid" value={`₦${(totalPaid / 1000).toFixed(0)}K`} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-            <Stat label="Payments" value={String(txCount)} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
+            <View style={[s.statCard, { backgroundColor: STAT_BG }]}>
+              <Text style={[s.statVal, { color: GREEN }]}>{txCount}</Text>
+              <Text style={[s.statTitle, { color: TEXT }]}>Total Paid</Text>
+              <Text style={[s.statSub, { color: MUTED }]}>Transactions</Text>
+            </View>
+
+            <View style={[s.statCard, { backgroundColor: STAT_BG }]}>
+              <Text style={[s.statVal, { color: GREEN }]}>2026</Text>
+              <Text style={[s.statTitle, { color: TEXT }]}>Member Since</Text>
+              <Text style={[s.statSub, { color: MUTED }]}>Verified</Text>
+            </View>
+
+            <View style={[s.statCard, { backgroundColor: STAT_BG }]}>
+              <Text style={[s.statVal, { color: GREEN }]}>Active</Text>
+              <Text style={[s.statTitle, { color: TEXT }]}>Status</Text>
+              <Text style={[s.statSub, { color: MUTED }]}>Synced</Text>
+            </View>
           </View>
 
-          {/* ── Account ── */}
-          <Section label="ACCOUNT" MUTED={MUTED}>
-            <Row icon="person-outline"  label="Full Name"   value={user?.name ?? '—'}       last={false} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-            <Row icon="mail-outline"    label="Email"       value={user?.email ?? '—'}      last={false} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-            <Row icon="globe-outline"   label="Country"     value={user?.country ?? '—'}    last={false} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-            <Row icon="school-outline"  label="University"  value={user?.university ?? '—'} last={false} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-            <Row icon="card-outline"    label="Student ID"  value={user?.studentId ?? '—'}  last TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-          </Section>
+          {/* Student & Contact Information Card */}
+          <View style={s.section}>
+            <Text style={[s.sectionTitle, { color: TEXT }]}>Contact Information</Text>
 
-          {/* ── Security ── */}
-          <Section label="SECURITY" MUTED={MUTED}>
-            <Row icon="lock-closed-outline"  label="Change Password"          last={false} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-            <Row icon="shield-checkmark-outline" label="Two-Factor Auth"
-              trailing={<Switch value={false} trackColor={{ true: SUCCESS }} thumbColor="#FFF" />}
-              last TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-          </Section>
+            <View style={[s.infoCard, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
 
-          {/* ── Notifications ── */}
-          <Section label="NOTIFICATIONS" MUTED={MUTED}>
-            <Row icon="notifications-outline" label="Payment Confirmations"
-              trailing={<Switch value={true} trackColor={{ true: SUCCESS }} thumbColor="#FFF" />}
-              last={false} TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-            <Row icon="alarm-outline" label="Fee Reminders"
-              trailing={<Switch value={true} trackColor={{ true: SUCCESS }} thumbColor="#FFF" />}
-              last TEXT={TEXT} MUTED={MUTED} SURF={SURF} BORDER={BORDER} />
-          </Section>
+              <View style={[s.infoRow, { borderBottomColor: BORDER }]}>
+                <Ionicons name="call-outline" size={18} color={MUTED} />
+                <Text style={[s.infoLabel, { color: MUTED }]}>Phone:</Text>
+                <Text style={[s.infoValue, { color: TEXT }]}>+250 788 123 456</Text>
+              </View>
 
-          {/* ── Sign out ── */}
+              <View style={[s.infoRow, { borderBottomColor: BORDER }]}>
+                <Ionicons name="school-outline" size={18} color={MUTED} />
+                <Text style={[s.infoLabel, { color: MUTED }]}>University:</Text>
+                <Text style={[s.infoValue, { color: TEXT }]} numberOfLines={1}>
+                  {user?.university || 'CMU Africa'}
+                </Text>
+              </View>
+
+              <View style={[s.infoRow, { borderBottomColor: BORDER }]}>
+                <Ionicons name="card-outline" size={18} color={MUTED} />
+                <Text style={[s.infoLabel, { color: MUTED }]}>Student ID:</Text>
+                <Text style={[s.infoValue, { color: TEXT }]}>{user?.studentId || 'CMU/2024/0189'}</Text>
+              </View>
+
+              <View style={[s.infoRow, { borderBottomWidth: 0 }]}>
+                <Ionicons name="location-outline" size={18} color={MUTED} />
+                <Text style={[s.infoLabel, { color: MUTED }]}>Location:</Text>
+                <Text style={[s.infoValue, { color: TEXT }]}>{countryConfig.flag} {countryConfig.name}</Text>
+              </View>
+
+            </View>
+          </View>
+
+          {/* Sign Out Button */}
           <Pressable
-            style={({ pressed }) => [s.logoutBtn, { borderColor: DANGER, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [s.logoutBtn, { borderColor: DANGER, opacity: pressed ? 0.75 : 1 }]}
             onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={18} color={DANGER} />
             <Text style={[s.logoutTxt, { color: DANGER }]}>Sign Out</Text>
           </Pressable>
 
-          <Text style={[s.version, { color: MUTED }]}>BitComut Africa v1.0.0</Text>
+          <Text style={[s.versionTxt, { color: MUTED }]}>BitComut Africa v1.0.0</Text>
+
         </ScrollView>
       </SafeAreaView>
     </View>
   );
 }
 
-function Section({ label, MUTED, children }: any) {
-  return (
-    <View style={s.section}>
-      <Text style={[s.sectionLabel, { color: MUTED }]}>{label}</Text>
-      <View style={s.sectionBody}>{children}</View>
-    </View>
-  );
-}
-
-function Row({ icon, label, value, trailing, last, TEXT, MUTED, SURF, BORDER }: any) {
-  return (
-    <View style={[s.row, { backgroundColor: SURF, borderBottomColor: BORDER }, last && s.rowLast]}>
-      <Ionicons name={icon} size={18} color={MUTED} />
-      <Text style={[s.rowLabel, { color: TEXT }]}>{label}</Text>
-      <View style={s.rowRight}>
-        {value && <Text style={[s.rowValue, { color: MUTED }]} numberOfLines={1}>{value}</Text>}
-        {trailing}
-        {!trailing && <Ionicons name="chevron-forward" size={16} color={MUTED} />}
-      </View>
-    </View>
-  );
-}
-
-function Stat({ label, value, TEXT, MUTED, SURF, BORDER }: any) {
-  return (
-    <View style={[s.stat, { backgroundColor: SURF, borderColor: BORDER }]}>
-      <Text style={[s.statValue, { color: TEXT }]}>{value}</Text>
-      <Text style={[s.statLabel, { color: MUTED }]}>{label}</Text>
-    </View>
-  );
-}
-
 const s = StyleSheet.create({
-  root:  { flex: 1 },
-  safe:  { flex: 1 },
-  scroll: { padding: 20, gap: 16, paddingBottom: 40 },
+  root: { flex: 1 },
+  safe: { flex: 1 },
 
-  idBlock: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth },
-  avatar:  { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  avatarTxt: { fontSize: 18, color: '#FFF', fontWeight: '700' },
-  idInfo: { flex: 1, gap: 2 },
-  idName:  { fontSize: 16, fontWeight: '700' },
-  idEmail: { fontSize: 13 },
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  settingsBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-  statsRow: { flexDirection: 'row', gap: 10 },
-  stat: { flex: 1, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 2, alignItems: 'center' },
-  statValue: { fontSize: 22, fontWeight: '800' },
-  statLabel: { fontSize: 12 },
+  scroll: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 110, // space for tab bar
+    gap: 20,
+  },
 
-  section: { gap: 6 },
-  sectionLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5, paddingHorizontal: 2 },
-  sectionBody: { borderRadius: 14, overflow: 'hidden' },
+  // Hero Card
+  heroCard: {
+    alignItems: 'center',
+    padding: 24,
+    borderRadius: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 8,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 4,
+  },
+  avatarCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarTxt: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  badgeCircle: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
 
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
-  rowLast: { borderBottomWidth: 0 },
-  rowLabel: { flex: 1, fontSize: 14, fontWeight: '500' },
-  rowRight: { flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: '45%' },
-  rowValue: { fontSize: 13, textAlign: 'right' },
+  userName: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  userEmail: {
+    fontSize: 13,
+  },
 
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 50, borderRadius: 14, borderWidth: 1 },
-  logoutTxt: { fontSize: 15, fontWeight: '700' },
+  statusTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 4,
+  },
+  statusTagTxt: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 
-  version: { fontSize: 12, textAlign: 'center' },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  ratingTxt: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+
+  // Stats Row
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  statVal: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  statTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  statSub: {
+    fontSize: 10,
+  },
+
+  // Section
+  section: {
+    gap: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+
+  // Info Card
+  infoCard: {
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+    gap: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 10,
+  },
+  infoLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    width: 80,
+  },
+  infoValue: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // Logout
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  logoutTxt: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  versionTxt: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
 });
