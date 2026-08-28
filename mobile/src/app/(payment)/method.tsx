@@ -10,7 +10,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@/components/ui/icon';
+import { useAuth } from '@/context/auth-context';
 import { usePayment } from '@/context/payment-context';
+import { getCountryConfig } from '@/constants/universities';
 
 const METHODS = [
   {
@@ -38,8 +40,13 @@ const METHODS = [
 
 export default function MethodScreen() {
   const isDark = useColorScheme() === 'dark';
-  const { selectedAmount, btcRate } = usePayment();
+  const { user } = useAuth();
+  const { selectedAmount } = usePayment();
   const [selected, setSelected] = useState('lightning');
+
+  const countryConfig = getCountryConfig(user?.country);
+  const btcRate       = countryConfig.btcRate;
+  const currencySym   = countryConfig.currencySymbol;
 
   const BG     = isDark ? '#070C07' : '#FFFFFF';
   const SURF   = isDark ? '#0E150E' : '#F6F6F6';
@@ -50,7 +57,8 @@ export default function MethodScreen() {
   const GREEN  = '#1B7F3B';
   const BTC    = '#F59E0B';
 
-  const btcAmt = (selectedAmount / btcRate).toFixed(6);
+  const amtToPay = selectedAmount || 285000;
+  const btcAmt   = (amtToPay / btcRate).toFixed(6);
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
@@ -68,7 +76,7 @@ export default function MethodScreen() {
         {/* Amount summary */}
         <View style={[s.amtBlock, { backgroundColor: SURF, borderColor: BORDER }]}>
           <Text style={[s.amtLabel, { color: MUTED }]}>You are paying</Text>
-          <Text style={[s.amtNGN, { color: TEXT }]}>₦{selectedAmount.toLocaleString()}</Text>
+          <Text style={[s.amtNGN, { color: TEXT }]}>{currencySym}{amtToPay.toLocaleString()}</Text>
           <Text style={[s.amtBTC, { color: BTC }]}>≈ {btcAmt} BTC  ·  rate locked</Text>
         </View>
 

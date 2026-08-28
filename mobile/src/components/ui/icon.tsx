@@ -1,59 +1,24 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
+import { Ionicons as ExpoIonicons } from '@expo/vector-icons';
 
-export type IconName =
-  | 'home'
-  | 'home-outline'
-  | 'pay'
-  | 'pay-outline'
-  | 'time'
-  | 'time-outline'
-  | 'person'
-  | 'person-outline'
-  | 'flash'
-  | 'card-outline'
-  | 'school'
-  | 'school-outline'
-  | 'checkmark'
-  | 'checkmark-circle'
-  | 'close'
-  | 'arrow-back'
-  | 'arrow-forward'
-  | 'arrow-up-circle'
-  | 'arrow-up-circle-outline'
-  | 'search-outline'
-  | 'eye-outline'
-  | 'eye-off-outline'
-  | 'lock-closed-outline'
-  | 'shield-checkmark-outline'
-  | 'shield-checkmark'
-  | 'notifications-outline'
-  | 'alarm-outline'
-  | 'log-out-outline'
-  | 'chevron-forward'
-  | 'chevron-down'
-  | 'logo-bitcoin'
-  | 'receipt-outline'
-  | 'ellipse-outline'
-  | 'copy-outline'
-  | 'globe-outline'
-  | 'mail-outline';
+export type IconName = React.ComponentProps<typeof ExpoIonicons>['name'];
 
 interface IconProps {
-  name: IconName;
+  name: IconName | string;
   size?: number;
   color?: string | any;
   style?: any;
 }
 
 /**
- * Pure SVG Icon system that works on Web and Mobile without external font dependencies.
+ * Platform-aware icon component.
+ * Uses native @expo/vector-icons on Mobile and SVG fallback on Web.
  */
 export function Icon({ name, size = 20, color = '#FFFFFF', style }: IconProps) {
-  const d = PATHS[name] || PATHS['home'];
-  const isFilled = !name.includes('outline') && name !== 'close' && name !== 'arrow-back' && name !== 'arrow-forward' && name !== 'chevron-forward' && name !== 'chevron-down';
-
   if (Platform.OS === 'web') {
+    const d = PATHS[name as string] || PATHS['home'];
+    const isFilled = !name.includes('outline') && name !== 'close' && name !== 'arrow-back' && name !== 'arrow-forward' && name !== 'chevron-forward' && name !== 'chevron-down';
     return (
       <svg
         width={size}
@@ -70,11 +35,7 @@ export function Icon({ name, size = 20, color = '#FFFFFF', style }: IconProps) {
     );
   }
 
-  return (
-    <View style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
-      {/* Native fallback */}
-    </View>
-  );
+  return <ExpoIonicons name={name as any} size={size} color={color} style={style} />;
 }
 
 const PATHS: Record<string, React.ReactNode> = {
