@@ -1,21 +1,16 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet, useColorScheme } from 'react-native';
-import { Colors } from '@/constants/theme';
 import { Ionicons } from '@/components/ui/icon';
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.icon,
+        tabBarActiveTintColor: '#386635',
+        tabBarInactiveTintColor: '#889988',
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E5E8E5',
         },
       }}>
       <Tabs.Screen
@@ -32,7 +27,7 @@ export default function AppTabs() {
         options={{
           title: 'Pay Fees',
           tabBarIcon: ({ color }: { color: string }) => (
-            <Ionicons name="pay" size={20} color={color} />
+            <Ionicons name="card-outline" size={20} color={color} />
           ),
         }}
       />
