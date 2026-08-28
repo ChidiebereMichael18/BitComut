@@ -24,8 +24,18 @@ const FEE_TYPES = [
   { label: 'Library & Tech Levy', amount: 12500 },
 ];
 
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect } from 'react';
+
 export default function PayScreen() {
+  const { invoiceId } = useLocalSearchParams<{ invoiceId?: string }>();
   const { setPaymentDetails } = usePayment();
+
+  useEffect(() => {
+    if (invoiceId) {
+      router.replace(`/(payment)/lightning?invoiceId=${encodeURIComponent(invoiceId)}`);
+    }
+  }, [invoiceId]);
 
   const BG     = '#FFFFFF';
   const SURF   = '#F8FAF8';

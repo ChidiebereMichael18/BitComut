@@ -1,106 +1,166 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import QRCode from 'react-native-qrcode-svg';
+
 import { Ionicons } from '@/components/ui/icon';
+import { useAuth } from '@/context/auth-context';
 import { usePayment } from '@/context/payment-context';
+import {
+  getMyInvoices,
+  payInvoice,
+  getMyPayment,
+  type StudentPayResponse,
+} from '@/lib/api/student';
+import { formatCurrency, formatSats, formatExchangeRate } from '@/lib/format';
+import type { Invoice, Payment } from '@/lib/types';
 
-const MOCK_INVOICE =
-  'lnbc2800000n1p3xh9ppsp5kh9x2u7l9fmz4jkz3hq0nf4d3w7y8e5vgza3q0px2n8ys7w6ksdq5w3jhxapqd4jhx6pqd4jhxap5cqzpuxqyz5vqsp5kh9x2u7l9fmz4jkz3hq0nf4d3w7y8e5vgza3q0px2n8ys7w6ks';
-
-const COUNTDOWN_SECONDS = 600; // 10 min
+const POLL_MS = 5000;
 
 export default function LightningPaymentScreen() {
-  const { selectedAmount, selectedUniversity, selectedStudentId, selectedCurrency, paySelectedInvoice } =
-    usePayment();
+  const { invoiceId: paramInvoiceId } = useLocalSearchParams<{ invoiceId?: string }>();
+  const { user } = useAuth();
+  const { selectedInvoiceId, selectedCurrency, invoices: contextInvoices, refresh } = usePayment();
 
-  const BG      = '#FFFFFF';
-  const SURF    = '#F8FAF8';
-  const CARD    = '#F0F4F0';
-  const BORDER  = '#E5E8E5';
-  const TEXT    = '#1A2E1A';
-  const MUTED   = '#6B7A6B';
-  const GREEN   = '#386635';
-  const SUCCESS = '#2B7A28';
-  const BTC     = '#F59E0B';
-  const WARN    = '#F59E0B';
+  const activeInvoiceId = paramInvoiceId || selectedInvoiceId;
 
-  const [timeLeft, setTimeLeft] = useState(COUNTDOWN_SECONDS);
-  const [paymentStatus, setPaymentStatus] = useState<'waiting' | 'confirming' | 'done'>('waiting');
+  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [pay, setPay] = useState<StudentPayResponse | null>(null);
+  const [payment, setPayment] = useState<Payment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const qrAnim = useRef(new Animated.Value(0)).current;
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Display estimate using Rwanda BTC rate until real lightning info arrives
-  const BTC_RATE = 138500000; // RWF per BTC
-  const btcAmount = (selectedAmount / BTC_RATE).toFixed(6);
-  const satAmount = Math.round((selectedAmount / BTC_RATE) * 100000000);
+  const currency = selectedCurrency || 'RWF';
+
+  const stopPolling = useCallback(() => {
+    if (timer.current) {
+      clearInterval(timer.current);
+      timer.current = null;
+    }
+  }, []);
+
+  const onPaymentCreated = useCallback(
+    async (res: StudentPayResponse) => {
+      setPay(res);
+      setPayment(res.payment);
+      setCreating(false);
+      setLoading(false);
+      stopPolling();
+
+      timer.current = setInterval(async () => {
+        try {
+          const p = await getMyPayment(res.payment.id);
+          setPayment(p);
+          if (p.status !== 'Pending' && p.status !== 'Processing') {
+            stopPolling();
+            refresh().catch(() => {});
+          }
+        } catch {
+          // ignore transient poll error
+        }
+      }, POLL_MS);
+    },
+    [refresh, stopPolling]
+  );
+
+  const handlePay = useCallback(
+    async (targetId: string) => {
+      if (!targetId) return;
+      setCreating(true);
+      try {
+        const res = await payInvoice(targetId);
+        await onPaymentCreated(res);
+      } catch (e: any) {
+        setCreating(false);
+        setLoading(false);
+        Alert.alert('Payment Error', e?.message || 'Unable to create Lightning payment');
+      }
+    },
+    [onPaymentCreated]
+  );
 
   useEffect(() => {
-    Animated.spring(qrAnim, { toValue: 1, tension: 60, friction: 10, useNativeDriver: true }).start();
-
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.12, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      ]),
-    );
-    pulse.start();
-
-    const interval = setInterval(() => {
-      setTimeLeft((t) => (t <= 1 ? (clearInterval(interval), 0) : t - 1));
-    }, 1000);
-
-    // Call real API — navigate to success on resolve
-    const callApi = async () => {
+    (async () => {
       try {
-        setPaymentStatus('confirming');
-        await paySelectedInvoice();
-        pulse.stop();
-        setPaymentStatus('done');
-        clearInterval(interval);
-        setTimeout(() => router.replace('/(payment)/success'), 1000);
+        let invs = contextInvoices;
+        if (!invs || invs.length === 0) {
+          invs = await getMyInvoices();
+        }
+        const found = invs.find((i) => i.id === activeInvoiceId);
+        setInvoice(found ?? invs[0] ?? null);
+
+        const targetId = found?.id || activeInvoiceId || invs[0]?.id;
+        if (targetId) {
+          await handlePay(targetId);
+        } else {
+          setLoading(false);
+        }
       } catch {
-        // If API not available yet, simulate for demo
-        const simulatePayment = setTimeout(() => {
-          pulse.stop();
-          setPaymentStatus('confirming');
-          setTimeout(() => {
-            setPaymentStatus('done');
-            clearInterval(interval);
-            setTimeout(() => router.replace('/(payment)/success'), 1000);
-          }, 1500);
-        }, 7000);
-        return () => clearTimeout(simulatePayment);
+        setLoading(false);
       }
-    };
+    })();
 
-    callApi();
+    return stopPolling;
+  }, [activeInvoiceId, contextInvoices, handlePay, stopPolling]);
 
-    return () => {
-      clearInterval(interval);
-      pulse.stop();
-    };
-  }, [paySelectedInvoice, pulseAnim, qrAnim]);
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
-  const handleCopy = () => {
+  const copy = async () => {
+    if (!pay) return;
+    await Clipboard.setStringAsync(pay.lightning.paymentRequest);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const settled = payment && payment.status !== 'Pending' && payment.status !== 'Processing';
+
+  const BG     = '#FFFFFF';
+  const SURF   = '#F8FAF8';
+  const BORDER = '#E5E8E5';
+  const TEXT   = '#1A2E1A';
+  const MUTED  = '#6B7A6B';
+  const GREEN  = '#386635';
+  const BTC    = '#F59E0B';
+  const SUCCESS = '#22C55E';
+
+  if (loading) {
+    return (
+      <View style={s.center}>
+        <ActivityIndicator color={BTC} size="large" />
+        <Text style={s.centerText}>Preparing Lightning payment...</Text>
+      </View>
+    );
+  }
+
+  if (!invoice || (!pay && !creating)) {
+    return (
+      <View style={s.center}>
+        <Ionicons name="alert-circle-outline" size={48} color={MUTED} />
+        <Text style={s.centerText}>We couldn't find this invoice or create payment.</Text>
+        <Pressable style={s.smallButton} onPress={() => router.back()}>
+          <Text style={s.smallButtonText}>Go back</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <SafeAreaView style={s.safe}>
-
-        {/* Header */}
+        {/* Top Header */}
         <View style={[s.header, { borderBottomColor: BORDER }]}>
           <Pressable style={s.closeBtn} onPress={() => router.back()}>
             <Ionicons name="close" size={22} color={MUTED} />
@@ -109,138 +169,207 @@ export default function LightningPaymentScreen() {
           <View style={s.closeBtn} />
         </View>
 
-        <View style={s.content}>
-          {/* Amount info */}
-          <View style={s.amtBlock}>
-            <Text style={[s.amtBtc, { color: BTC }]}>{btcAmount} BTC</Text>
-            <Text style={[s.amtSats, { color: MUTED }]}>{satAmount.toLocaleString()} sats  ·  ≈ ₦{selectedAmount.toLocaleString()}</Text>
-          </View>
+        <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
-          {/* Animated QR container */}
-          <Animated.View
-            style={[
-              s.qrWrapper,
-              { backgroundColor: SURF, borderColor: BORDER, transform: [{ scale: qrAnim }] },
-            ]}>
-            <QRMock isDark={false} />
-            <View style={[s.qrCenter, { backgroundColor: CARD }]}>
-              <Ionicons name="flash" size={18} color={BTC} />
+          {/* Invoice Summary Card */}
+          <View style={[s.invoiceCard, { backgroundColor: SURF, borderColor: BORDER }]}>
+            <View style={s.invoiceTop}>
+              <Text style={[s.invoiceNumber, { color: GREEN }]}>{invoice.number}</Text>
+              <View style={s.typeBadge}>
+                <Text style={s.typeBadgeTxt}>{invoice.type}</Text>
+              </View>
             </View>
-          </Animated.View>
-
-          {/* Status Row */}
-          {paymentStatus === 'waiting' && (
-            <Animated.View style={[s.statusRow, { transform: [{ scale: pulseAnim }] }]}>
-              <View style={[s.statusDot, { backgroundColor: WARN }]} />
-              <Text style={[s.statusTxt, { color: WARN }]}>Waiting for Lightning payment...</Text>
-            </Animated.View>
-          )}
-          {paymentStatus === 'confirming' && (
-            <View style={s.statusRow}>
-              <View style={[s.statusDot, { backgroundColor: SUCCESS }]} />
-              <Text style={[s.statusTxt, { color: SUCCESS }]}>Confirming transaction...</Text>
-            </View>
-          )}
-          {paymentStatus === 'done' && (
-            <View style={s.statusRow}>
-              <Ionicons name="checkmark-circle" size={16} color={SUCCESS} />
-              <Text style={[s.statusTxt, { color: SUCCESS }]}>Payment received!</Text>
-            </View>
-          )}
-
-          {/* Countdown card */}
-          <View style={[s.card, { backgroundColor: SURF, borderColor: BORDER }]}>
-            <Text style={[s.cardLabel, { color: MUTED }]}>Invoice expires in</Text>
-            <Text style={[s.countdown, { color: timeLeft < 60 ? '#EF4444' : TEXT }]}>
-              {formatTime(timeLeft)}
+            {invoice.description ? (
+              <Text style={[s.invoiceDesc, { color: MUTED }]}>{invoice.description}</Text>
+            ) : null}
+            <Text style={[s.invoiceAmount, { color: TEXT }]}>
+              {formatCurrency(invoice.amount - invoice.amountPaid, invoice.currency || currency)}
             </Text>
           </View>
 
-          {/* Invoice copy card */}
-          <View style={[s.card, { backgroundColor: SURF, borderColor: BORDER, gap: 10 }]}>
-            <Text style={[s.cardLabel, { color: MUTED }]}>Invoice String</Text>
-            <Text style={[s.invoiceCode, { color: TEXT }]} numberOfLines={2}>
-              {MOCK_INVOICE}
-            </Text>
-            <Pressable
-              style={({ pressed }: { pressed: boolean }) => [
-                s.copyBtn,
-                { backgroundColor: copied ? SURF : GREEN, opacity: pressed ? 0.85 : 1 },
-              ]}
-              onPress={handleCopy}>
-              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color="#FFF" />
-              <Text style={s.copyBtnTxt}>{copied ? 'Copied to Clipboard' : 'Copy Invoice'}</Text>
-            </Pressable>
-          </View>
+          {/* Lightning Payment QR Card */}
+          {creating ? (
+            <View style={s.centerBox}>
+              <ActivityIndicator color={BTC} size="large" />
+              <Text style={s.centerText}>Contacting Lightning network...</Text>
+            </View>
+          ) : pay && payment ? (
+            <View style={[s.lightningCard, { backgroundColor: SURF, borderColor: BORDER }]}>
+              <Text style={[s.cardTitle, { color: TEXT }]}>
+                {settled ? 'Payment Complete 🎉' : 'Scan to Pay with Lightning'}
+              </Text>
 
-        </View>
+              {/* QR Code Container */}
+              <View style={s.qrWrap}>
+                <QRCode
+                  value={pay.lightning.paymentRequest}
+                  size={200}
+                  color="#000000"
+                  backgroundColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Sats & Rate Display */}
+              <Text style={[s.sats, { color: BTC }]}>
+                {formatSats(payment.btcSats || pay.lightning.sats)}
+              </Text>
+              <Text style={[s.rate, { color: MUTED }]}>
+                {formatExchangeRate(pay.lightning.rate, currency)}
+              </Text>
+
+              {/* Status Indicator */}
+              {!settled ? (
+                <View style={s.waitingRow}>
+                  <ActivityIndicator color={BTC} size="small" />
+                  <Text style={[s.waitingText, { color: BTC }]}>
+                    {payment.status === 'Processing'
+                      ? 'Processing payment...'
+                      : 'Waiting for Lightning payment...'}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={[s.settledText, { color: SUCCESS }]}>
+                  Your payment is confirmed. You can check it under History.
+                </Text>
+              )}
+
+              {/* Copy Invoice Button */}
+              <Pressable
+                style={({ pressed }) => [
+                  s.copyButton,
+                  { borderColor: BORDER, opacity: pressed ? 0.75 : 1 },
+                ]}
+                onPress={copy}>
+                <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color={TEXT} />
+                <Text style={[s.copyButtonText, { color: TEXT }]}>
+                  {copied ? 'Payment request copied!' : 'Copy payment request'}
+                </Text>
+              </Pressable>
+
+              {/* Done CTA */}
+              {settled && (
+                <Pressable
+                  style={({ pressed }) => [
+                    s.doneButton,
+                    { backgroundColor: GREEN, opacity: pressed ? 0.85 : 1 },
+                  ]}
+                  onPress={() => router.replace('/(main)')}>
+                  <Text style={s.doneButtonText}>Done</Text>
+                </Pressable>
+              )}
+            </View>
+          ) : null}
+
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
 }
 
-function QRMock({ isDark }: { isDark: boolean }) {
-  const blocks = [
-    [true, true, true, true, false, true, true],
-    [true, false, false, true, true, false, true],
-    [true, false, true, false, true, false, true],
-    [true, true, false, true, false, true, true],
-    [false, true, true, false, true, true, false],
-    [true, false, true, true, false, false, true],
-    [true, true, true, false, true, true, true],
-  ];
-
-  return (
-    <View style={qrStyles.grid}>
-      {blocks.map((row, ri) => (
-        <View key={ri} style={qrStyles.row}>
-          {row.map((filled, ci) => (
-            <View
-              key={ci}
-              style={[
-                qrStyles.cell,
-                { backgroundColor: filled ? (isDark ? '#F0F0F0' : '#0D0D0D') : 'transparent' },
-              ]}
-            />
-          ))}
-        </View>
-      ))}
-    </View>
-  );
-}
-
-const qrStyles = StyleSheet.create({
-  grid: { gap: 4 },
-  row:  { flexDirection: 'row', gap: 4 },
-  cell: { width: 18, height: 18, borderRadius: 2 },
-});
-
 const s = StyleSheet.create({
   root: { flex: 1 },
   safe: { flex: 1 },
 
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   closeBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 16, fontWeight: '700' },
 
-  content: { flex: 1, paddingHorizontal: 20, paddingTop: 16, gap: 16, alignItems: 'center' },
+  content: { padding: 20, gap: 16, paddingBottom: 40 },
 
-  amtBlock: { alignItems: 'center', gap: 2 },
-  amtBtc:   { fontSize: 30, fontWeight: '800', letterSpacing: -0.5 },
-  amtSats:  { fontSize: 13, fontWeight: '500' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, gap: 12 },
+  centerBox: { padding: 40, alignItems: 'center', gap: 12 },
+  centerText: { fontSize: 14, color: '#6B7A6B', textAlign: 'center' },
 
-  qrWrapper: { width: 196, height: 196, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  qrCenter:  { position: 'absolute', width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  smallButton: {
+    backgroundColor: '#386635',
+    borderRadius: 12,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  smallButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
 
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusTxt: { fontSize: 13, fontWeight: '600' },
+  invoiceCard: {
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+    gap: 8,
+  },
+  invoiceTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  invoiceNumber: { fontSize: 15, fontWeight: '800' },
+  typeBadge: {
+    backgroundColor: '#EAEFEA',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  typeBadgeTxt: { fontSize: 12, fontWeight: '700', color: '#1A2E1A' },
+  invoiceDesc: { fontSize: 13 },
+  invoiceAmount: { fontSize: 26, fontWeight: '800', marginTop: 4 },
 
-  card: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, padding: 14, alignItems: 'center', alignSelf: 'stretch', gap: 4 },
-  cardLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 0.5 },
-  countdown: { fontSize: 24, fontWeight: '800', letterSpacing: 2 },
-  invoiceCode: { fontSize: 11, lineHeight: 16, fontFamily: 'monospace', textAlign: 'center' },
+  lightningCard: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 20,
+    gap: 12,
+  },
+  cardTitle: { fontSize: 16, fontWeight: '800' },
 
-  copyBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 10, alignSelf: 'stretch', marginTop: 2 },
-  copyBtnTxt: { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  qrWrap: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E5E8E5',
+    marginVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+
+  sats: { fontSize: 24, fontWeight: '800' },
+  rate: { fontSize: 12, fontWeight: '500' },
+
+  waitingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+  waitingText: { fontSize: 13, fontWeight: '700' },
+
+  settledText: { fontSize: 14, fontWeight: '700', marginTop: 8, textAlign: 'center' },
+
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignSelf: 'stretch',
+  },
+  copyButtonText: { fontSize: 14, fontWeight: '700' },
+
+  doneButton: {
+    marginTop: 8,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
+  doneButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
 });
