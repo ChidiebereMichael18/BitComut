@@ -8,18 +8,18 @@ export default function SplashScreen() {
   const { isLoggedIn } = useAuth();
 
   const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.95)).current;
+  const scale   = useRef(new Animated.Value(0.92)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 450,
+        duration: 500,
         useNativeDriver: true,
       }),
       Animated.spring(scale, {
         toValue: 1,
-        friction: 8,
+        friction: 7,
         useNativeDriver: true,
       }),
     ]).start(() => {
@@ -27,20 +27,25 @@ export default function SplashScreen() {
         if (isLoggedIn) {
           router.replace('/(main)');
         } else {
-          router.replace('/(auth)/welcome');
+          router.replace('/(auth)/login');
         }
-      }, 900);
+      }, 1200);
     });
   }, [isLoggedIn, opacity, scale]);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#070C07" />
+      <StatusBar barStyle="light-content" backgroundColor="#1B7F3B" />
 
-      <Animated.View style={[styles.center, { opacity, transform: [{ scale }] }]}>
-        <AppLogo size={76} bg="#1B7F3B" color="#FFFFFF" />
+      {/* Centered Large App Logo */}
+      <Animated.View style={[styles.centerLogo, { opacity, transform: [{ scale }] }]}>
+        <AppLogo size={110} bg="#FFFFFF" color="#1B7F3B" useImage />
+      </Animated.View>
+
+      {/* Bottom Branding (Matching Raenest reference layout) */}
+      <Animated.View style={[styles.bottomBrand, { opacity }]}>
         <Text style={styles.appName}>BitComut</Text>
-        <Text style={styles.appRegion}>AFRICA</Text>
+        <Text style={styles.tagline}>Your Bitcoin Tuition Partner for Africa</Text>
       </Animated.View>
     </View>
   );
@@ -49,24 +54,30 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#070C07',
+    backgroundColor: '#1B7F3B', // Brand Green
     alignItems: 'center',
     justifyContent: 'center',
   },
-  center: {
+  centerLogo: {
+    flex: 1,
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
+  },
+  bottomBrand: {
+    alignItems: 'center',
+    paddingBottom: 48,
+    gap: 4,
   },
   appName: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
-  appRegion: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#1B7F3B',
-    letterSpacing: 4,
+  tagline: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: 0.2,
   },
 });

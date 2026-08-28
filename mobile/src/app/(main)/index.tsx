@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Switch,
   Text,
   View,
   useColorScheme,
@@ -20,19 +19,17 @@ export default function HomeScreen() {
   const isDark = useColorScheme() === 'dark';
   const { user } = useAuth();
   const { pendingFees, transactions } = usePayment();
-  const [autoSync, setAutoSync] = useState(true);
 
   // Dynamic Country Currency & Live BTC Rate Sync
   const countryConfig  = getCountryConfig(user?.country);
   const btcRate        = countryConfig.btcRate;
   const currencySymbol = countryConfig.currencySymbol;
-  const currencyCode   = countryConfig.currency;
 
-  // Palette
+  // Theme Colors
   const GREEN    = '#1B7F3B';
   const BG       = isDark ? '#070C07' : '#F4F6F4';
-  const CARD_BG  = isDark ? '#0E150E' : '#FFFFFF';
-  const STAT_BG  = isDark ? '#131D13' : '#F0F5F0';
+  const SHEET_BG = isDark ? '#0E150E' : '#FFFFFF';
+  const CARD_BG  = isDark ? '#131D13' : '#F8FAF8';
   const BORDER   = isDark ? '#1C271C' : '#E5E7EB';
   const TEXT     = isDark ? '#F0F0F0' : '#111827';
   const MUTED    = isDark ? '#7E967E' : '#6B7280';
@@ -42,7 +39,7 @@ export default function HomeScreen() {
 
   const totalDue   = pendingFees.reduce((s, f) => s + f.amount, 0);
   const btcEquiv   = (totalDue / btcRate).toFixed(5);
-  const fullName   = user?.name?.toUpperCase() ?? 'STUDENT';
+  const userName   = user?.name?.toUpperCase() ?? 'STUDENT';
   const recentTxns = transactions.slice(0, 4);
 
   const statusColor = (s: string) =>
@@ -58,17 +55,17 @@ export default function HomeScreen() {
       <View style={s.topHeader}>
         <SafeAreaView edges={['top']} style={s.headerSafeArea}>
           <View style={s.headerContent}>
-            {/* User Info */}
-            <View style={s.userInfoRow}>
+            {/* User Avatar + Greeting */}
+            <Pressable onPress={() => router.push('/(main)/profile')} style={s.userInfoRow}>
               <View style={s.avatarCircle}>
                 <Text style={s.avatarTxt}>{user?.avatarInitials ?? 'BC'}</Text>
               </View>
               <View>
                 <Text style={s.greetingTxt}>Good Morning</Text>
-                <Text style={s.userNameTxt}>{fullName}</Text>
+                <Text style={s.userNameTxt}>{userName}</Text>
                 <Text style={s.countryTagTxt}>{countryConfig.flag} {countryConfig.name}</Text>
               </View>
-            </View>
+            </Pressable>
 
             {/* Bell Icon */}
             <Pressable style={s.bellBtn}>
@@ -79,30 +76,14 @@ export default function HomeScreen() {
         </SafeAreaView>
       </View>
 
-      {/* ── Main Scroll View inside White Curved Card ── */}
+      {/* ── Main Scroll View inside White/Dark Curved Sheet ── */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={s.scrollContent}>
 
-        <View style={[s.curvedSheet, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
+        <View style={[s.curvedSheet, { backgroundColor: SHEET_BG, borderColor: BORDER }]}>
 
-          {/* 1. Availability / Sync Toggle */}
-          <View style={[s.toggleCard, { backgroundColor: STAT_BG, borderColor: BORDER }]}>
-            <View style={s.toggleInfo}>
-              <Text style={[s.toggleTitle, { color: TEXT }]}>Live Bursar Sync</Text>
-              <Text style={[s.toggleSub, { color: MUTED }]}>
-                {autoSync ? 'Receiving real-time fee updates' : 'Sync paused'}
-              </Text>
-            </View>
-            <Switch
-              value={autoSync}
-              onValueChange={setAutoSync}
-              trackColor={{ false: '#D1D5DB', true: GREEN }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-
-          {/* 2. Featured Dark Green Balance Card */}
+          {/* 1. Outstanding Balance Card (Brand Green) */}
           <Pressable
             style={({ pressed }) => [s.balanceCard, { opacity: pressed ? 0.92 : 1 }]}
             onPress={() => router.push('/(main)/pay')}>
@@ -122,60 +103,33 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
 
-          {/* 3. Three Equal Grid Stats Row */}
-          <View style={s.statsRow}>
-            {/* Stat 1 */}
-            <View style={[s.statCard, { backgroundColor: STAT_BG }]}>
-              <Ionicons name="school-outline" size={22} color={GREEN} />
-              <Text style={[s.statVal, { color: TEXT }]}>{pendingFees.length}</Text>
-              <Text style={[s.statTitle, { color: TEXT }]}>Fees</Text>
-              <Text style={[s.statSub, { color: MUTED }]}>Pending</Text>
-            </View>
-
-            {/* Stat 2 */}
-            <View style={[s.statCard, { backgroundColor: STAT_BG }]}>
-              <Ionicons name="logo-bitcoin" size={22} color="#F59E0B" />
-              <Text style={[s.statVal, { color: TEXT }]}>{countryConfig.rateFormatted.replace(currencySymbol, '')}</Text>
-              <Text style={[s.statTitle, { color: TEXT }]}>BTC Rate</Text>
-              <Text style={[s.statSub, { color: MUTED }]}>{currencyCode}</Text>
-            </View>
-
-            {/* Stat 3 */}
-            <View style={[s.statCard, { backgroundColor: STAT_BG }]}>
-              <Ionicons name="flash" size={22} color={GREEN} />
-              <Text style={[s.statVal, { color: TEXT }]}>0.01s</Text>
-              <Text style={[s.statTitle, { color: TEXT }]}>Speed</Text>
-              <Text style={[s.statSub, { color: MUTED }]}>Lightning</Text>
-            </View>
-          </View>
-
-          {/* 4. Shortcuts Section */}
+          {/* 2. Shortcuts Horizontal Scroll */}
           <View style={s.section}>
             <Text style={[s.sectionTitle, { color: TEXT }]}>Shortcuts</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.shortcutsScroll}>
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(main)/pay')}>
                 <Ionicons name="arrow-up-circle" size={18} color={GREEN} />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Pay Fees</Text>
               </Pressable>
 
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(payment)/lightning')}>
                 <Ionicons name="flash" size={18} color="#F59E0B" />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Lightning</Text>
               </Pressable>
 
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(main)/history')}>
                 <Ionicons name="receipt-outline" size={18} color={GREEN} />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Receipts</Text>
               </Pressable>
 
               <Pressable
-                style={[s.shortcutBtn, { backgroundColor: STAT_BG, borderColor: BORDER }]}
+                style={[s.shortcutBtn, { backgroundColor: CARD_BG, borderColor: BORDER }]}
                 onPress={() => router.push('/(main)/profile')}>
                 <Ionicons name="person-outline" size={18} color={GREEN} />
                 <Text style={[s.shortcutTxt, { color: TEXT }]}>Profile</Text>
@@ -183,7 +137,7 @@ export default function HomeScreen() {
             </ScrollView>
           </View>
 
-          {/* 5. Recent Activity Section */}
+          {/* 3. Recent Activity Section */}
           <View style={s.section}>
             <View style={s.sectionHead}>
               <Text style={[s.sectionTitle, { color: TEXT }]}>Recent Activity</Text>
@@ -192,7 +146,7 @@ export default function HomeScreen() {
               </Pressable>
             </View>
 
-            <View style={[s.txListCard, { backgroundColor: STAT_BG, borderColor: BORDER }]}>
+            <View style={[s.txListCard, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
               {recentTxns.map((tx, i) => (
                 <View
                   key={tx.id}
@@ -201,7 +155,7 @@ export default function HomeScreen() {
                     { borderBottomColor: BORDER },
                     i === recentTxns.length - 1 && { borderBottomWidth: 0 },
                   ]}>
-                  <View style={[s.txIconBox, { backgroundColor: CARD_BG }]}>
+                  <View style={[s.txIconBox, { backgroundColor: SHEET_BG }]}>
                     <Ionicons
                       name={tx.method === 'lightning' ? 'flash' : 'card-outline'}
                       size={18}
@@ -320,36 +274,17 @@ const s = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
-    paddingTop: 20,
-    gap: 18,
-  },
-
-  // 1. Toggle Card
-  toggleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 18,
+    paddingTop: 24,
+    gap: 20,
     borderWidth: StyleSheet.hairlineWidth,
-  },
-  toggleInfo: {
-    gap: 2,
-  },
-  toggleTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  toggleSub: {
-    fontSize: 12,
+    minHeight: 600,
   },
 
-  // 2. Balance Card
+  // 1. Balance Card
   balanceCard: {
     backgroundColor: '#1B7F3B',
     borderRadius: 20,
-    padding: 20,
+    padding: 22,
     gap: 12,
   },
   balanceCardTop: {
@@ -363,16 +298,16 @@ const s = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.85)',
   },
   balanceCardAmt: {
-    fontSize: 32,
+    fontSize: 34,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: -0.8,
     marginTop: 4,
   },
   arrowCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -381,33 +316,6 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#E2F7E2',
-  },
-
-  // 3. Stats Row
-  statsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  statVal: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  statTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  statSub: {
-    fontSize: 10,
   },
 
   // Section
