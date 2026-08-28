@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { AppLogo } from '@/components/ui/app-logo';
 import { useAuth } from '@/context/auth-context';
 
-const BRAND_GREEN = '#386635'; // Muted Forest Green matching reference UI
+const BRAND_GREEN = '#386635';
 
 export default function SplashScreen() {
   const { isLoggedIn } = useAuth();
@@ -16,7 +16,7 @@ export default function SplashScreen() {
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 500,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.spring(scale, {
@@ -31,55 +31,85 @@ export default function SplashScreen() {
         } else {
           router.replace('/(auth)/login');
         }
-      }, 1200);
+      }, 1400);
     });
   }, [isLoggedIn, opacity, scale]);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={BRAND_GREEN} />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Centered App Logo */}
-      <Animated.View style={[styles.centerLogo, { opacity, transform: [{ scale }] }]}>
-        <AppLogo size={110} bg="#FFFFFF" color={BRAND_GREEN} useImage />
+      {/* Centered App Logo & Headline */}
+      <Animated.View style={[styles.centerBlock, { opacity, transform: [{ scale }] }]}>
+        <AppLogo size={110} bg={BRAND_GREEN} color="#FFFFFF" useImage />
+
+        <View style={styles.textBlock}>
+          <Text style={styles.appName}>BitComut Africa</Text>
+          <Text style={styles.headline}>Cross-Border University Payments, Made Simple.</Text>
+        </View>
       </Animated.View>
 
-      {/* Bottom Branding (Matching Raenest reference layout) */}
-      <Animated.View style={[styles.bottomBrand, { opacity }]}>
-        <Text style={styles.appName}>BitComut</Text>
-        <Text style={styles.tagline}>Your Bitcoin Tuition Partner for Africa</Text>
+      {/* Bottom Footer */}
+      <Animated.View style={[styles.bottomFooter, { opacity }]}>
+        <View style={styles.pulseDot} />
+        <Text style={styles.footerTxt}>Secured by Bitcoin Lightning Network ⚡</Text>
       </Animated.View>
     </View>
   );
 }
 
+const FONT_FAMILY = Platform.OS === 'ios' ? 'System' : 'sans-serif-medium';
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: '#FFFFFF', // Pure Crisp White
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 32,
   },
-  centerLogo: {
+  centerBlock: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 24,
   },
-  bottomBrand: {
+  textBlock: {
     alignItems: 'center',
-    paddingBottom: 48,
-    gap: 4,
+    gap: 8,
+    maxWidth: 300,
   },
   appName: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.6,
+    fontFamily: FONT_FAMILY,
+    color: '#1A2E1A',
+    letterSpacing: -0.8,
   },
-  tagline: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.88)',
-    letterSpacing: 0.2,
+  headline: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+    color: '#445544',
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  bottomFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingBottom: 48,
+  },
+  pulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: BRAND_GREEN,
+  },
+  footerTxt: {
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+    color: '#778877',
   },
 });

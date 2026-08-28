@@ -15,16 +15,16 @@ export default function LightningPaymentScreen() {
   const { selectedAmount, selectedUniversity, selectedStudentId, btcRate, addTransaction } =
     usePayment();
 
-  const BG     = isDark ? '#070C07' : '#FFFFFF';
-  const SURF   = isDark ? '#0E150E' : '#F6F6F6';
-  const CARD   = isDark ? '#131A13' : '#F0F0F0';
-  const BORDER = isDark ? '#1C271C' : '#E4E4E4';
-  const TEXT   = isDark ? '#F0F0F0' : '#0D0D0D';
-  const MUTED  = isDark ? '#4E644E' : '#6B7280';
-  const GREEN  = '#1B7F3B';
-  const SUCCESS = isDark ? '#22C55E' : '#16A34A';
-  const BTC    = '#F59E0B';
-  const WARN   = '#F59E0B';
+  const BG      = '#FFFFFF';
+  const SURF    = '#F8FAF8';
+  const CARD    = '#F0F4F0';
+  const BORDER  = '#E5E8E5';
+  const TEXT    = '#1A2E1A';
+  const MUTED   = '#6B7A6B';
+  const GREEN   = '#386635';
+  const SUCCESS = '#2B7A28';
+  const BTC     = '#F59E0B';
+  const WARN    = '#F59E0B';
 
   const [timeLeft, setTimeLeft] = useState(COUNTDOWN_SECONDS);
   const [paymentStatus, setPaymentStatus] = useState<'waiting' | 'confirming' | 'done'>('waiting');
@@ -92,7 +92,7 @@ export default function LightningPaymentScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={BG} />
+      <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <SafeAreaView style={s.safe}>
 
         {/* Header */}

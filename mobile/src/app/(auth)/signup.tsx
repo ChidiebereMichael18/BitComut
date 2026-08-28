@@ -11,156 +11,124 @@ import {
   Text,
   TextInput,
   View,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@/components/ui/icon';
+import { AppLogo } from '@/components/ui/app-logo';
 import { COUNTRIES, Country } from '@/constants/universities';
 import { useAuth } from '@/context/auth-context';
 
-export default function SignupScreen() {
-  const isDark = useColorScheme() === 'dark';
-  const { signup } = useAuth();
+const BRAND_GREEN = '#386635'; // Forest Green
 
-  const BG     = isDark ? '#070C07' : '#FFFFFF';
-  const SURF   = isDark ? '#0E150E' : '#F6F6F6';
-  const CARD   = isDark ? '#131A13' : '#F0F0F0';
-  const BORDER = isDark ? '#1C271C' : '#E4E4E4';
-  const TEXT   = isDark ? '#F0F0F0' : '#0D0D0D';
-  const MUTED  = isDark ? '#4E644E' : '#6B7280';
-  const INPUT  = isDark ? '#0E150E' : '#F6F6F6';
-  const GREEN  = '#1B7F3B';
-  const DANGER = isDark ? '#EF4444' : '#DC2626';
-  const PH     = isDark ? '#2A3A2A' : '#C0C8C0';
+export default function SignupScreen() {
+  const { login } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]); // Default to Rwanda (Kigali)
+  const [showPassword, setShowPassword] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
   const [university, setUniversity] = useState('');
   const [studentId, setStudentId] = useState('');
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
-  const [showUniPicker, setShowUniPicker] = useState(false);
+  const [countryModal, setCountryModal] = useState(false);
+  const [uniModal, setUniModal] = useState(false);
   const [uniSearch, setUniSearch] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const filteredUnis = selectedCountry.universities.filter((u: string) =>
+  const filteredUnis = selectedCountry.universities.filter((u) =>
     u.toLowerCase().includes(uniSearch.toLowerCase()),
   );
 
   const handleSignup = async () => {
-    if (!name.trim() || !email.trim() || !password.trim() || !university || !studentId.trim()) {
+    if (!name.trim() || !email.trim() || !password.trim() || !university) {
       setError('Please fill in all required fields.');
-      return;
-    }
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
       return;
     }
     setError('');
     setLoading(true);
     try {
-      await signup({
-        name,
-        email,
-        password,
-        country: selectedCountry.name,
-        university,
-        studentId,
-      });
+      await login(email, password);
       router.replace('/(main)');
     } catch {
-      setError('Registration failed. Please try again.');
+      setError('Could not create account. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={[s.root, { backgroundColor: BG }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={BG} />
+    <View style={s.root}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Country Selection Modal */}
-      <Modal
-        visible={showCountryPicker}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowCountryPicker(false)}>
-        <View style={[s.modal, { backgroundColor: SURF }]}>
-          <View style={[s.modalHeader, { borderBottomColor: BORDER }]}>
-            <Text style={[s.modalTitle, { color: TEXT }]}>Select Country</Text>
-            <Pressable onPress={() => setShowCountryPicker(false)}>
-              <Text style={[s.modalDone, { color: GREEN }]}>Done</Text>
+      <Modal visible={countryModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setCountryModal(false)}>
+        <View style={s.modal}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>Select Country</Text>
+            <Pressable onPress={() => setCountryModal(false)}>
+              <Text style={s.modalDone}>Done</Text>
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={s.modalList}>
-            {COUNTRIES.map((c: Country) => (
+            {COUNTRIES.map((c) => (
               <Pressable
                 key={c.id}
                 style={[
                   s.modalItem,
-                  { borderBottomColor: BORDER },
-                  selectedCountry.id === c.id && { backgroundColor: CARD },
+                  selectedCountry.id === c.id && s.modalItemActive,
                 ]}
                 onPress={() => {
                   setSelectedCountry(c);
                   setUniversity('');
-                  setShowCountryPicker(false);
+                  setCountryModal(false);
                 }}>
-                <Text style={[s.modalItemTxt, { color: TEXT }]}>
-                  {c.flag}  {c.name}
-                </Text>
-                {selectedCountry.id === c.id && <Ionicons name="checkmark" size={18} color={GREEN} />}
+                <Text style={s.modalItemTxt}>{c.flag}  {c.name}</Text>
+                {selectedCountry.id === c.id && <Ionicons name="checkmark" size={18} color={BRAND_GREEN} />}
               </Pressable>
             ))}
           </ScrollView>
         </View>
       </Modal>
 
-      {/* University Search Modal */}
-      <Modal
-        visible={showUniPicker}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowUniPicker(false)}>
-        <View style={[s.modal, { backgroundColor: SURF }]}>
-          <View style={[s.modalHeader, { borderBottomColor: BORDER }]}>
-            <Text style={[s.modalTitle, { color: TEXT }]}>Select University ({selectedCountry.name})</Text>
-            <Pressable onPress={() => setShowUniPicker(false)}>
-              <Text style={[s.modalDone, { color: GREEN }]}>Done</Text>
+      {/* University Selection Modal */}
+      <Modal visible={uniModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setUniModal(false)}>
+        <View style={s.modal}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>Select University ({selectedCountry.name})</Text>
+            <Pressable onPress={() => setUniModal(false)}>
+              <Text style={s.modalDone}>Done</Text>
             </Pressable>
           </View>
-          <View style={[s.modalSearch, { backgroundColor: INPUT, borderColor: BORDER }]}>
-            <Ionicons name="search-outline" size={16} color={MUTED} />
+          <View style={s.modalSearch}>
+            <Ionicons name="search-outline" size={16} color="#667766" />
             <TextInput
-              style={[s.modalSearchInput, { color: TEXT }]}
-              placeholder={`Search ${selectedCountry.name} universities...`}
-              placeholderTextColor={PH}
+              style={s.modalSearchInput}
+              placeholder={`Search in ${selectedCountry.name}...`}
+              placeholderTextColor="#99A899"
               value={uniSearch}
               onChangeText={setUniSearch}
               autoFocus
             />
           </View>
           <ScrollView contentContainerStyle={s.modalList}>
-            {filteredUnis.map((u: string) => (
+            {filteredUnis.map((u) => (
               <Pressable
                 key={u}
                 style={[
                   s.modalItem,
-                  { borderBottomColor: BORDER },
-                  university === u && { backgroundColor: CARD },
+                  university === u && s.modalItemActive,
                 ]}
                 onPress={() => {
                   setUniversity(u);
                   setUniSearch('');
-                  setShowUniPicker(false);
+                  setUniModal(false);
                 }}>
-                <Text style={[s.modalItemTxt, { color: TEXT }]}>{u}</Text>
-                {university === u && <Ionicons name="checkmark" size={18} color={GREEN} />}
+                <Text style={s.modalItemTxt}>{u}</Text>
+                {university === u && <Ionicons name="checkmark" size={18} color={BRAND_GREEN} />}
               </Pressable>
             ))}
           </ScrollView>
@@ -169,47 +137,54 @@ export default function SignupScreen() {
 
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={s.kbav} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={s.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
 
-            {/* Back button */}
-            <Pressable style={s.backBtn} onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={22} color={MUTED} />
-            </Pressable>
-
-            {/* Header */}
-            <View style={s.head}>
-              <Text style={[s.title, { color: TEXT }]}>Create Account</Text>
-              <Text style={[s.sub, { color: MUTED }]}>Enter your country and student details to get started.</Text>
+            {/* Back Button & Top Logo */}
+            <View style={s.topNav}>
+              <Pressable
+                style={s.backBtn}
+                onPress={() => router.replace('/(auth)/login')}>
+                <Ionicons name="arrow-back" size={22} color="#334433" />
+              </Pressable>
+              <AppLogo size={38} bg={BRAND_GREEN} color="#FFFFFF" useImage />
             </View>
 
-            {/* Form */}
-            <View style={[s.card, { backgroundColor: SURF, borderColor: BORDER }]}>
+            {/* Title Block */}
+            <View style={s.head}>
+              <Text style={s.title}>Create Account 🎓</Text>
+              <Text style={s.sub}>Join BitComut Africa to pay tuition fees seamlessly with Bitcoin.</Text>
+            </View>
+
+            {/* Form Card */}
+            <View style={s.card}>
               {error ? (
-                <View style={[s.errBox, { borderColor: DANGER }]}>
-                  <Text style={[s.errTxt, { color: DANGER }]}>{error}</Text>
+                <View style={s.errBox}>
+                  <Text style={s.errTxt}>{error}</Text>
                 </View>
               ) : null}
 
-              {/* Name */}
+              {/* Full Name */}
               <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>Full Name</Text>
+                <Text style={s.label}>Full Name</Text>
                 <TextInput
-                  style={[s.input, { backgroundColor: INPUT, borderColor: BORDER, color: TEXT }]}
-                  placeholder="e.g. Jean-Paul Habimana"
-                  placeholderTextColor={PH}
+                  style={s.input}
+                  placeholder="Jean-Paul Habimana"
+                  placeholderTextColor="#99A899"
                   value={name}
                   onChangeText={setName}
-                  autoCapitalize="words"
                 />
               </View>
 
               {/* Email */}
               <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>Email Address</Text>
+                <Text style={s.label}>Email Address</Text>
                 <TextInput
-                  style={[s.input, { backgroundColor: INPUT, borderColor: BORDER, color: TEXT }]}
-                  placeholder="your@email.com"
-                  placeholderTextColor={PH}
+                  style={s.input}
+                  placeholder="student@university.edu"
+                  placeholderTextColor="#99A899"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -217,78 +192,59 @@ export default function SignupScreen() {
                 />
               </View>
 
+              {/* Country */}
+              <View style={s.field}>
+                <Text style={s.label}>Country</Text>
+                <Pressable style={s.selectorBtn} onPress={() => setCountryModal(true)}>
+                  <Text style={s.selectorTxt}>{selectedCountry.flag}  {selectedCountry.name}</Text>
+                  <Ionicons name="chevron-down" size={16} color="#667766" />
+                </Pressable>
+              </View>
+
+              {/* University */}
+              <View style={s.field}>
+                <Text style={s.label}>University</Text>
+                <Pressable style={s.selectorBtn} onPress={() => setUniModal(true)}>
+                  <Text style={[s.selectorTxt, !university && s.phTxt]}>
+                    {university || `Select university in ${selectedCountry.name}`}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color="#667766" />
+                </Pressable>
+              </View>
+
               {/* Password */}
               <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>Password</Text>
-                <View style={[s.inputRow, { backgroundColor: INPUT, borderColor: BORDER }]}>
+                <Text style={s.label}>Password</Text>
+                <View style={s.inputRow}>
                   <TextInput
-                    style={[s.inputFlex, { color: TEXT }]}
-                    placeholder="Min. 8 characters"
-                    placeholderTextColor={PH}
+                    style={s.inputFlex}
+                    placeholder="Create a password"
+                    placeholderTextColor="#99A899"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                   />
                   <Pressable onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={MUTED} />
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#667766" />
                   </Pressable>
                 </View>
               </View>
 
-              {/* Country Selector */}
-              <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>Country</Text>
-                <Pressable
-                  style={[s.uniBtn, { backgroundColor: INPUT, borderColor: BORDER }]}
-                  onPress={() => setShowCountryPicker(true)}>
-                  <Text style={[s.uniBtnTxt, { color: TEXT }]}>
-                    {selectedCountry.flag}  {selectedCountry.name}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color={MUTED} />
-                </Pressable>
-              </View>
-
-              {/* University Selector */}
-              <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>University ({selectedCountry.name})</Text>
-                <Pressable
-                  style={[s.uniBtn, { backgroundColor: INPUT, borderColor: BORDER }]}
-                  onPress={() => setShowUniPicker(true)}>
-                  <Text style={[s.uniBtnTxt, { color: university ? TEXT : PH }]} numberOfLines={1}>
-                    {university || `Select university in ${selectedCountry.name}`}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color={MUTED} />
-                </Pressable>
-              </View>
-
-              {/* Student ID */}
-              <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>Student ID / Matric No.</Text>
-                <TextInput
-                  style={[s.input, { backgroundColor: INPUT, borderColor: BORDER, color: TEXT }]}
-                  placeholder="e.g. CMU/2024/CS/0189"
-                  placeholderTextColor={PH}
-                  value={studentId}
-                  onChangeText={setStudentId}
-                  autoCapitalize="characters"
-                />
-              </View>
-
-              {/* Submit CTA */}
+              {/* Primary CTA */}
               <Pressable
-                style={({ pressed }: { pressed: boolean }) => [s.btn, { backgroundColor: GREEN, opacity: loading ? 0.8 : pressed ? 0.85 : 1 }]}
+                style={({ pressed }) => [s.btn, { opacity: loading ? 0.8 : pressed ? 0.88 : 1 }]}
                 onPress={handleSignup}
                 disabled={loading}>
-                {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.btnTxt}>Create Account</Text>}
+                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={s.btnTxt}>Create Account</Text>}
               </Pressable>
             </View>
 
-            {/* Footer link */}
+            {/* Footer */}
             <View style={s.footer}>
-              <Text style={[s.footerTxt, { color: MUTED }]}>Already have an account? </Text>
+              <Text style={s.footerTxt}>Already have an account? </Text>
               <Pressable onPress={() => router.replace('/(auth)/login')}>
-                <Text style={[s.footerLink, { color: TEXT }]}>Sign in</Text>
+                <Text style={s.footerLink}>Sign In</Text>
               </Pressable>
             </View>
 
@@ -300,46 +256,218 @@ export default function SignupScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1 },
-  safe: { flex: 1 },
-  kbav: { flex: 1 },
-  scroll: { flexGrow: 1, padding: 24, gap: 18, justifyContent: 'center' },
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF', // Pure White
+  },
+  safe: {
+    flex: 1,
+  },
+  kbav: {
+    flex: 1,
+  },
+  scroll: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 40,
+    gap: 18,
+  },
 
-  backBtn: { width: 36, height: 36, justifyContent: 'center' },
+  topNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    backgroundColor: '#F4F6F4',
+  },
 
-  head: { gap: 6 },
-  title: { fontSize: 30, fontWeight: '800', letterSpacing: -0.8 },
-  sub:   { fontSize: 14, lineHeight: 20 },
+  head: {
+    gap: 6,
+    marginTop: 4,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A2E1A',
+    letterSpacing: -0.6,
+  },
+  sub: {
+    fontSize: 14,
+    color: '#556955',
+    lineHeight: 20,
+  },
 
-  card: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 20, gap: 14 },
-  errBox: { padding: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth },
-  errTxt: { fontSize: 13, fontWeight: '500' },
+  card: {
+    backgroundColor: '#F8FAF8',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    padding: 20,
+    gap: 14,
+  },
+  errBox: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  errTxt: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#DC2626',
+  },
 
-  field: { gap: 5 },
-  label: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#445544',
+    letterSpacing: 0.3,
+  },
 
-  input: { height: 50, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, fontSize: 15 },
-  inputRow: { height: 50, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 },
-  inputFlex: { flex: 1, fontSize: 15 },
-  eyeBtn: { paddingLeft: 10 },
+  input: {
+    height: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: '#1A2E1A',
+  },
+  selectorBtn: {
+    height: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+  },
+  selectorTxt: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1A2E1A',
+  },
+  phTxt: {
+    color: '#99A899',
+  },
 
-  uniBtn: { height: 50, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14 },
-  uniBtnTxt: { fontSize: 15, flex: 1 },
+  inputRow: {
+    height: 50,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+  },
+  inputFlex: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1A2E1A',
+  },
+  eyeBtn: {
+    paddingLeft: 10,
+  },
 
-  btn: { height: 54, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
-  btnTxt: { fontSize: 16, fontWeight: '700', color: '#FFF' },
+  btn: {
+    height: 54,
+    borderRadius: 14,
+    backgroundColor: BRAND_GREEN,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  btnTxt: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 
-  footer: { flexDirection: 'row', justifyContent: 'center' },
-  footerTxt: { fontSize: 14 },
-  footerLink: { fontSize: 14, fontWeight: '700' },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  footerTxt: {
+    fontSize: 14,
+    color: '#667766',
+  },
+  footerLink: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: BRAND_GREEN,
+  },
 
-  modal: { flex: 1 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: StyleSheet.hairlineWidth },
-  modalTitle: { fontSize: 17, fontWeight: '700' },
-  modalDone: { fontSize: 15, fontWeight: '600' },
-  modalSearch: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, paddingHorizontal: 12, height: 44, borderRadius: 10, borderWidth: 1 },
-  modalSearchInput: { flex: 1, fontSize: 15 },
-  modalList: { paddingBottom: 40 },
-  modalItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: StyleSheet.hairlineWidth },
-  modalItemTxt: { fontSize: 15, flex: 1 },
+  // Modal
+  modal: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderColor: '#E5E8E5',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1A2E1A',
+  },
+  modalDone: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: BRAND_GREEN,
+  },
+  modalSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    margin: 16,
+    paddingHorizontal: 12,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    backgroundColor: '#F8FAF8',
+  },
+  modalSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1A2E1A',
+  },
+  modalList: {
+    paddingBottom: 40,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderColor: '#E5E8E5',
+  },
+  modalItemActive: {
+    backgroundColor: '#F4F8F4',
+  },
+  modalItemTxt: {
+    fontSize: 15,
+    color: '#1A2E1A',
+    flex: 1,
+  },
 });

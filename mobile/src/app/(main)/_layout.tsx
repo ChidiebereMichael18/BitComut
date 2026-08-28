@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { StyleSheet, useColorScheme, Platform } from 'react-native';
+import { StyleSheet, Platform, View } from 'react-native';
 import { Ionicons } from '@/components/ui/icon';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -11,46 +11,34 @@ const TAB_CONFIG: {
   icon: IoniconsName;
   iconFocused: IoniconsName;
 }[] = [
-  { name: 'index',   label: 'Dashboard', icon: 'home-outline',            iconFocused: 'home' },
-  { name: 'pay',     label: 'Pay Fees',  icon: 'arrow-up-circle-outline', iconFocused: 'arrow-up-circle' },
-  { name: 'history', label: 'History',   icon: 'time-outline',            iconFocused: 'time' },
-  { name: 'profile', label: 'Profile',   icon: 'person-outline',          iconFocused: 'person' },
+  { name: 'index',   label: 'Home',     icon: 'home-outline',            iconFocused: 'home' },
+  { name: 'pay',     label: 'Pay Fees', icon: 'card-outline',            iconFocused: 'card' },
+  { name: 'history', label: 'History',  icon: 'time-outline',            iconFocused: 'time' },
+  { name: 'profile', label: 'Profile',  icon: 'person-outline',          iconFocused: 'person' },
 ];
 
 const BRAND_GREEN = '#386635';
 
 export default function MainLayout() {
-  const isDark = useColorScheme() === 'dark';
-
-  const tabBg       = isDark ? '#121C12' : '#FFFFFF';
-  const tabBorder   = isDark ? '#1F2E1F' : '#E5E7EB';
-  const activeCol   = BRAND_GREEN;
-  const inactiveCol = isDark ? '#6B7280' : '#8E8E93';
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          position: 'absolute',
-          bottom: Platform.OS === 'ios' ? 24 : 16,
-          left: 16,
-          right: 16,
-          height: 66,
-          borderRadius: 33,
-          backgroundColor: tabBg,
-          borderColor: tabBorder,
-          borderWidth: StyleSheet.hairlineWidth,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#F0F2F0',
+          borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 84 : 64,
           paddingTop: 8,
-          paddingBottom: 8,
-          elevation: 12,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.12,
-          shadowRadius: 16,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          elevation: 8,
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
         },
-        tabBarActiveTintColor: activeCol,
-        tabBarInactiveTintColor: inactiveCol,
+        tabBarActiveTintColor: BRAND_GREEN,
+        tabBarInactiveTintColor: '#94A3B8',
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
@@ -64,11 +52,14 @@ export default function MainLayout() {
           options={{
             title: tab.label,
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? tab.iconFocused : tab.icon}
-                size={23}
-                color={color}
-              />
+              <View style={s.iconWrapper}>
+                <Ionicons
+                  name={focused ? tab.iconFocused : tab.icon}
+                  size={22}
+                  color={color}
+                />
+                {focused ? <View style={s.activeDot} /> : null}
+              </View>
             ),
           }}
         />
@@ -77,4 +68,18 @@ export default function MainLayout() {
   );
 }
 
-const styles = StyleSheet.create({});
+const s = StyleSheet.create({
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  activeDot: {
+    position: 'absolute',
+    bottom: -4,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: BRAND_GREEN,
+  },
+});

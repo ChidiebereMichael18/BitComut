@@ -1,6 +1,4 @@
-import { Ionicons } from '@/components/ui/icon';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,25 +10,17 @@ import {
   Text,
   TextInput,
   View,
-  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { router } from 'expo-router';
+import { Ionicons } from '@/components/ui/icon';
+import { AppLogo } from '@/components/ui/app-logo';
 import { useAuth } from '@/context/auth-context';
 
-export default function LoginScreen() {
-  const isDark = useColorScheme() === 'dark';
-  const { login } = useAuth();
+const BRAND_GREEN = '#386635'; // Forest Green
 
-  const BG     = isDark ? '#070C07' : '#FFFFFF';
-  const SURF   = isDark ? '#0E150E' : '#F6F6F6';
-  const BORDER = isDark ? '#1C271C' : '#E4E4E4';
-  const TEXT   = isDark ? '#F0F0F0' : '#0D0D0D';
-  const MUTED  = isDark ? '#4E644E' : '#6B7280';
-  const INPUT  = isDark ? '#0E150E' : '#F6F6F6';
-  const GREEN  = '#1B7F3B';
-  const DANGER = isDark ? '#EF4444' : '#DC2626';
-  const PH     = isDark ? '#2A3A2A' : '#C0C8C0';
+export default function LoginScreen() {
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,38 +46,41 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={[s.root, { backgroundColor: BG }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={BG} />
+    <View style={s.root}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={s.safe}>
         <KeyboardAvoidingView style={s.kbav} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={s.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
 
-            {/* Back button */}
-            <Pressable style={s.backBtn} onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={22} color={MUTED} />
-            </Pressable>
-
-            {/* Title block */}
-            <View style={s.head}>
-              <Text style={[s.title, { color: TEXT }]}>Sign In</Text>
-              <Text style={[s.sub, { color: MUTED }]}>Enter your credentials to manage and pay fees.</Text>
+            {/* Top Logo */}
+            <View style={s.topNav}>
+              <AppLogo size={42} bg={BRAND_GREEN} color="#FFFFFF" useImage />
             </View>
 
-            {/* Card form */}
-            <View style={[s.card, { backgroundColor: SURF, borderColor: BORDER }]}>
+            {/* Title Block Raised Up */}
+            <View style={s.head}>
+              <Text style={s.title}>Welcome Back 👋</Text>
+              <Text style={s.sub}>Sign in to your BitComut Africa student account to pay and track tuition fees.</Text>
+            </View>
+
+            {/* Clean Form Card */}
+            <View style={s.card}>
               {error ? (
-                <View style={[s.errBox, { borderColor: DANGER }]}>
-                  <Text style={[s.errTxt, { color: DANGER }]}>{error}</Text>
+                <View style={s.errBox}>
+                  <Text style={s.errTxt}>{error}</Text>
                 </View>
               ) : null}
 
-              {/* Email */}
+              {/* Email Field */}
               <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>Email Address</Text>
+                <Text style={s.label}>Email Address</Text>
                 <TextInput
-                  style={[s.input, { backgroundColor: INPUT, borderColor: BORDER, color: TEXT }]}
-                  placeholder="your@email.com"
-                  placeholderTextColor={PH}
+                  style={s.input}
+                  placeholder="student@university.edu"
+                  placeholderTextColor="#99A899"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -95,39 +88,39 @@ export default function LoginScreen() {
                 />
               </View>
 
-              {/* Password */}
+              {/* Password Field */}
               <View style={s.field}>
-                <Text style={[s.label, { color: MUTED }]}>Password</Text>
-                <View style={[s.inputRow, { backgroundColor: INPUT, borderColor: BORDER }]}>
+                <Text style={s.label}>Password</Text>
+                <View style={s.inputRow}>
                   <TextInput
-                    style={[s.inputFlex, { color: TEXT }]}
-                    placeholder="Your password"
-                    placeholderTextColor={PH}
+                    style={s.inputFlex}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#99A899"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                   />
                   <Pressable onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={MUTED} />
+                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color="#667766" />
                   </Pressable>
                 </View>
               </View>
 
-              {/* Primary CTA */}
+              {/* Primary Sign In CTA */}
               <Pressable
-                style={({ pressed }) => [s.btn, { backgroundColor: GREEN, opacity: loading ? 0.8 : pressed ? 0.85 : 1 }]}
+                style={({ pressed }) => [s.btn, { opacity: loading ? 0.8 : pressed ? 0.88 : 1 }]}
                 onPress={handleLogin}
                 disabled={loading}>
-                {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.btnTxt}>Sign In</Text>}
+                {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={s.btnTxt}>Sign In</Text>}
               </Pressable>
             </View>
 
-            {/* Footer link */}
+            {/* Footer Callout */}
             <View style={s.footer}>
-              <Text style={[s.footerTxt, { color: MUTED }]}>Don't have an account? </Text>
+              <Text style={s.footerTxt}>Don't have an account? </Text>
               <Pressable onPress={() => router.replace('/(auth)/signup')}>
-                <Text style={[s.footerLink, { color: TEXT }]}>Create Account</Text>
+                <Text style={s.footerLink}>Create Account</Text>
               </Pressable>
             </View>
 
@@ -139,33 +132,132 @@ export default function LoginScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1 },
-  safe: { flex: 1 },
-  kbav: { flex: 1 },
-  scroll: { flexGrow: 1, padding: 24, gap: 20, justifyContent: 'center' },
+  root: {
+    flex: 1,
+    backgroundColor: '#FFFFFF', // Pure White Background
+  },
+  safe: {
+    flex: 1,
+  },
+  kbav: {
+    flex: 1,
+  },
+  scroll: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 40,
+    gap: 20,
+    justifyContent: 'flex-start', // Raised up layout
+  },
 
-  backBtn: { width: 36, height: 36, justifyContent: 'center' },
+  topNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
 
-  head: { gap: 6 },
-  title: { fontSize: 32, fontWeight: '800', letterSpacing: -0.8 },
-  sub:   { fontSize: 14, lineHeight: 20 },
+  head: {
+    gap: 6,
+    marginTop: 4,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A2E1A',
+    letterSpacing: -0.6,
+  },
+  sub: {
+    fontSize: 14,
+    color: '#556955',
+    lineHeight: 20,
+  },
 
-  card: { borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, padding: 20, gap: 16 },
-  errBox: { padding: 12, borderRadius: 10, borderWidth: StyleSheet.hairlineWidth },
-  errTxt: { fontSize: 13, fontWeight: '500' },
+  card: {
+    backgroundColor: '#F8FAF8',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    padding: 20,
+    gap: 16,
+  },
+  errBox: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+  },
+  errTxt: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#DC2626',
+  },
 
-  field: { gap: 6 },
-  label: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5 },
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#445544',
+    letterSpacing: 0.3,
+  },
 
-  input: { height: 50, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 14, fontSize: 15 },
-  inputRow: { height: 50, borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14 },
-  inputFlex: { flex: 1, fontSize: 15 },
-  eyeBtn: { paddingLeft: 10 },
+  input: {
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: '#1A2E1A',
+  },
+  inputRow: {
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E8E5',
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+  },
+  inputFlex: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1A2E1A',
+  },
+  eyeBtn: {
+    paddingLeft: 10,
+  },
 
-  btn: { height: 54, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  btnTxt: { fontSize: 16, fontWeight: '700', color: '#FFF' },
+  btn: {
+    height: 54,
+    borderRadius: 14,
+    backgroundColor: BRAND_GREEN,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  btnTxt: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 
-  footer: { flexDirection: 'row', justifyContent: 'center' },
-  footerTxt: { fontSize: 14 },
-  footerLink: { fontSize: 14, fontWeight: '700' },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  footerTxt: {
+    fontSize: 14,
+    color: '#667766',
+  },
+  footerLink: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: BRAND_GREEN,
+  },
 });

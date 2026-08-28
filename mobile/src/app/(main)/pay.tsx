@@ -25,19 +25,18 @@ const FEE_TYPES = [
 ];
 
 export default function PayScreen() {
-  const isDark = useColorScheme() === 'dark';
   const { setPaymentDetails, btcRate } = usePayment();
 
-  const BG     = isDark ? '#070C07' : '#FFFFFF';
-  const SURF   = isDark ? '#0E150E' : '#F6F6F6';
-  const CARD   = isDark ? '#131A13' : '#F0F0F0';
-  const BORDER = isDark ? '#1C271C' : '#E4E4E4';
-  const TEXT   = isDark ? '#F0F0F0' : '#0D0D0D';
-  const MUTED  = isDark ? '#4E644E' : '#6B7280';
-  const INPUT  = isDark ? '#0E150E' : '#F6F6F6';
+  const BG     = '#FFFFFF';
+  const SURF   = '#F8FAF8';
+  const CARD   = '#F0F4F0';
+  const BORDER = '#E5E8E5';
+  const TEXT   = '#1A2E1A';
+  const MUTED  = '#6B7A6B';
+  const INPUT  = '#F8FAF8';
   const GREEN  = '#386635';
   const BTC    = '#F59E0B';
-  const PH     = isDark ? '#2A3A2A' : '#C0C8C0';
+  const PH     = '#99A899';
 
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]); // Default to Rwanda (Kigali)
@@ -66,7 +65,7 @@ export default function PayScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={BG} />
+      <StatusBar barStyle="dark-content" backgroundColor={BG} />
 
       {/* Country Modal */}
       <Modal visible={countryModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setCountryModal(false)}>
@@ -140,6 +139,11 @@ export default function PayScreen() {
       <SafeAreaView style={s.safe} edges={['top']}>
         {/* Header */}
         <View style={[s.header, { borderBottomColor: BORDER }]}>
+          <Pressable
+            style={s.backBtn}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/(main)'))}>
+            <Ionicons name="arrow-back" size={22} color={TEXT} />
+          </Pressable>
           <Text style={[s.headerTitle, { color: TEXT }]}>Pay Tuition & Fees</Text>
           <Text style={[s.headerStep, { color: MUTED }]}>Step {step} of 2</Text>
         </View>
@@ -314,7 +318,8 @@ const s = StyleSheet.create({
   scroll: { padding: 20, gap: 14, paddingBottom: 40 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14, borderBottomWidth: StyleSheet.hairlineWidth },
-  headerTitle: { fontSize: 20, fontWeight: '700' },
+  backBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F4F6F4', marginRight: 8 },
+  headerTitle: { fontSize: 20, fontWeight: '700', flex: 1 },
   headerStep: { fontSize: 13 },
 
   progressTrack: { height: 3, borderRadius: 2, overflow: 'hidden', marginHorizontal: 20 },

@@ -22,15 +22,15 @@ export default function ProfileScreen() {
 
   const countryConfig = getCountryConfig(user?.country);
 
-  const BG       = isDark ? '#070C07' : '#F4F6F4';
-  const CARD_BG  = isDark ? '#0E150E' : '#FFFFFF';
-  const STAT_BG  = isDark ? '#131D13' : '#F0F5F0';
-  const BORDER   = isDark ? '#1C271C' : '#E5E7EB';
-  const TEXT     = isDark ? '#F0F0F0' : '#111827';
-  const MUTED    = isDark ? '#7E967E' : '#6B7280';
+  const BG       = '#F4F6F4';
+  const CARD_BG  = '#FFFFFF';
+  const STAT_BG  = '#F0F5F0';
+  const BORDER   = '#E5E8E5';
+  const TEXT     = '#1A2E1A';
+  const MUTED    = '#6B7A6B';
   const GREEN    = '#386635';
-  const SUCCESS  = isDark ? '#22C55E' : '#16A34A';
-  const DANGER   = isDark ? '#EF4444' : '#DC2626';
+  const SUCCESS  = '#2B7A28';
+  const DANGER   = '#DC2626';
 
   const txCount = transactions.filter((t) => t.status === 'success').length;
 
@@ -41,7 +41,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={BG} />
+      <StatusBar barStyle="dark-content" backgroundColor={BG} />
       <SafeAreaView style={s.safe} edges={['top']}>
 
         {/* Top Header */}

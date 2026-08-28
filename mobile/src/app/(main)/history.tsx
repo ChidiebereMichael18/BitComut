@@ -33,15 +33,15 @@ export default function HistoryScreen() {
   const countryConfig  = getCountryConfig(user?.country);
   const currencySymbol = countryConfig.currencySymbol;
 
-  const BG       = isDark ? '#070C07' : '#F4F6F4';
-  const CARD_BG  = isDark ? '#0E150E' : '#FFFFFF';
-  const CHIP_BG  = isDark ? '#131D13' : '#EAEFEA';
-  const BORDER   = isDark ? '#1C271C' : '#E5E7EB';
-  const TEXT     = isDark ? '#F0F0F0' : '#111827';
-  const MUTED    = isDark ? '#7E967E' : '#6B7280';
-  const GREEN    = '#1B7F3B';
-  const SUCCESS  = isDark ? '#22C55E' : '#16A34A';
-  const DANGER   = isDark ? '#EF4444' : '#DC2626';
+  const BG       = '#F4F6F4';
+  const CARD_BG  = '#FFFFFF';
+  const CHIP_BG  = '#EAEFEA';
+  const BORDER   = '#E5E8E5';
+  const TEXT     = '#1A2E1A';
+  const MUTED    = '#6B7A6B';
+  const GREEN    = '#386635';
+  const SUCCESS  = '#2B7A28';
+  const DANGER   = '#DC2626';
   const WARN     = '#F59E0B';
 
   const filtered = filter === 'all'
