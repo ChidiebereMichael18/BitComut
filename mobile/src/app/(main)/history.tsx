@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Pressable,
+  RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -8,29 +9,33 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { Ionicons } from '@/components/ui/icon';
 import { useAuth } from '@/context/auth-context';
 import { usePayment } from '@/context/payment-context';
-import { getCountryConfig } from '@/constants/universities';
-import type { PaymentStatus, Payment } from '@/lib/types';
+import { formatCurrency, formatDate } from '@/lib/format';
+import type { Invoice, Payment } from '@/lib/types';
 
-type Filter = 'all' | 'Paid' | 'Pending' | 'Failed';
+type Tab = 'invoices' | 'payments';
+type Filter = 'all' | 'Unpaid' | 'Paid' | 'Overdue';
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all',     label: 'All' },
-  { key: 'Paid',    label: 'Paid' },
-  { key: 'Pending', label: 'Pending' },
-  { key: 'Failed',  label: 'Failed' },
-];
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  Unpaid:          { bg: '#FEE2E2', text: '#EF4444' },
+  'Partially Paid':{ bg: '#FEF3C7', text: '#F59E0B' },
+  Paid:            { bg: '#DCFCE7', text: '#22C55E' },
+  Settled:         { bg: '#DCFCE7', text: '#22C55E' },
+  Overdue:         { bg: '#FEE2E2', text: '#DC2626' },
+  Cancelled:       { bg: '#F3F4F6', text: '#6B7280' },
+};
 
 export default function HistoryScreen() {
   const { user } = useAuth();
-  const { transactions } = usePayment();
-  const [filter, setFilter] = useState<Filter>('all');
+  const { invoices, transactions, refresh, setPaymentDetails } = usePayment();
 
-  const countryConfig  = getCountryConfig(user?.country);
-  const currencySymbol = countryConfig.currencySymbol;
+  const [tab, setTab] = useState<Tab>('invoices');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [refreshing, setRefreshing] = useState(false);
 
   const BG       = '#F4F6F4';
   const CARD_BG  = '#FFFFFF';
@@ -39,18 +44,31 @@ export default function HistoryScreen() {
   const TEXT     = '#1A2E1A';
   const MUTED    = '#6B7A6B';
   const GREEN    = '#386635';
-  const SUCCESS  = '#2B7A28';
-  const DANGER   = '#DC2626';
-  const WARN     = '#F59E0B';
 
-  const filtered = filter === 'all'
-    ? transactions
-    : transactions.filter((t) => t.status === filter);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refresh().catch(() => {});
+    setRefreshing(false);
+  }, [refresh]);
 
-  const statusColor = (s: PaymentStatus) =>
-    s === 'Paid' || s === 'Settled' ? SUCCESS : s === 'Failed' ? DANGER : WARN;
+  const filteredInvoices = invoices.filter((i) => {
+    if (filter === 'all') return true;
+    return i.status === filter;
+  });
 
-  const statusLabel = (s: PaymentStatus) => s;
+  const handlePayInvoice = (inv: Invoice) => {
+    const remaining = inv.amount - inv.amountPaid;
+    setPaymentDetails(
+      inv.id,
+      user?.university || 'Digital Art University (DAU)',
+      user?.studentId || 'DAU-2024-8841',
+      remaining > 0 ? remaining : inv.amount,
+      inv.currency || 'RWF'
+    );
+    router.push('/(payment)/method');
+  };
+
+  const canPay = (status: string) => status === 'Unpaid' || status === 'Partially Paid' || status === 'Overdue';
 
   return (
     <View style={[s.root, { backgroundColor: BG }]}>
@@ -59,93 +77,178 @@ export default function HistoryScreen() {
 
         {/* Header */}
         <View style={s.header}>
-          <Text style={[s.headerTitle, { color: TEXT }]}>Transaction History</Text>
-          <Text style={[s.headerCount, { color: MUTED }]}>{filtered.length} records</Text>
+          <Text style={[s.headerTitle, { color: TEXT }]}>Invoices & History</Text>
         </View>
 
-        {/* Filter Chips */}
-        <View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.filterRow}>
-            {FILTERS.map((f) => {
-              const active = filter === f.key;
-              return (
-                <Pressable
-                  key={f.key}
-                  style={[
-                    s.filterChip,
-                    { backgroundColor: active ? GREEN : CHIP_BG, borderColor: active ? GREEN : BORDER },
-                  ]}
-                  onPress={() => setFilter(f.key)}>
-                  <Text style={[s.filterLabel, { color: active ? '#FFFFFF' : TEXT }]}>
-                    {f.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+        {/* Segmented Tab Switcher */}
+        <View style={s.tabContainer}>
+          <Pressable
+            style={[s.tabBtn, tab === 'invoices' && s.tabBtnActive]}
+            onPress={() => setTab('invoices')}>
+            <Text style={[s.tabTxt, tab === 'invoices' ? s.tabTxtActive : { color: MUTED }]}>
+              Invoices ({invoices.length})
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[s.tabBtn, tab === 'payments' && s.tabBtnActive]}
+            onPress={() => setTab('payments')}>
+            <Text style={[s.tabTxt, tab === 'payments' ? s.tabTxtActive : { color: MUTED }]}>
+              Payments ({transactions.length})
+            </Text>
+          </Pressable>
         </View>
 
-        {/* List of Transactions */}
-        <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-          {filtered.length === 0 ? (
-            <View style={s.empty}>
-              <Ionicons name="receipt-outline" size={44} color={MUTED} />
-              <Text style={[s.emptyTitle, { color: TEXT }]}>No transactions found</Text>
-              <Text style={[s.emptySub, { color: MUTED }]}>
-                {filter === 'all' ? 'Your payment history will appear here.' : `No ${filter} transactions.`}
-              </Text>
-            </View>
-          ) : (
-            filtered.map((tx: Payment) => (
-              <View key={tx.id} style={[s.txCard, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
-                {/* Top header row */}
-                <View style={s.txTop}>
-                  <View style={[s.txIcon, { backgroundColor: CHIP_BG }]}>
-                    <Ionicons
-                      name="flash"
-                      size={20}
-                      color={GREEN}
-                    />
-                  </View>
-                  <View style={s.txMeta}>
-                    <Text style={[s.txDesc, { color: TEXT }]}>{tx.invoiceId || 'Tuition Payment'}</Text>
-                    <Text style={[s.txId, { color: MUTED }]}>{tx.reference || tx.id}</Text>
-                  </View>
-                  <View style={[s.statusBadge, { backgroundColor: CHIP_BG }]}>
-                    <Text style={[s.txStatus, { color: statusColor(tx.status) }]}>
-                      {statusLabel(tx.status)}
+        {/* Filter Chips (Invoices view) */}
+        {tab === 'invoices' && (
+          <View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.filterRow}>
+              {(['all', 'Unpaid', 'Paid', 'Overdue'] as Filter[]).map((f) => {
+                const active = filter === f;
+                return (
+                  <Pressable
+                    key={f}
+                    style={[
+                      s.filterChip,
+                      { backgroundColor: active ? GREEN : CHIP_BG, borderColor: active ? GREEN : BORDER },
+                    ]}
+                    onPress={() => setFilter(f)}>
+                    <Text style={[s.filterLabel, { color: active ? '#FFFFFF' : TEXT }]}>
+                      {f === 'all' ? 'All Invoices' : f}
                     </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Main Content List */}
+        <ScrollView
+          contentContainerStyle={s.scroll}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={GREEN} colors={[GREEN]} />
+          }>
+
+          {tab === 'invoices' ? (
+            /* ── INVOICES TAB ── */
+            filteredInvoices.length === 0 ? (
+              <View style={s.empty}>
+                <Ionicons name="receipt-outline" size={44} color={MUTED} />
+                <Text style={[s.emptyTitle, { color: TEXT }]}>No Invoices Found</Text>
+                <Text style={[s.emptySub, { color: MUTED }]}>
+                  {filter === 'all' ? 'Your university invoices will appear here.' : `No ${filter} invoices.`}
+                </Text>
+              </View>
+            ) : (
+              filteredInvoices.map((item) => {
+                const colorScheme = STATUS_COLORS[item.status] || { bg: CHIP_BG, text: TEXT };
+                return (
+                  <View key={item.id} style={[s.card, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
+                    <View style={s.cardHeader}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.number}>{item.number}</Text>
+                        <Text style={[s.type, { color: TEXT }]}>{item.type}</Text>
+                      </View>
+                      <View style={[s.badge, { backgroundColor: colorScheme.bg }]}>
+                        <Text style={[s.badgeText, { color: colorScheme.text }]}>{item.status}</Text>
+                      </View>
+                    </View>
+
+                    {item.description ? (
+                      <Text style={[s.description, { color: MUTED }]}>{item.description}</Text>
+                    ) : null}
+
+                    <View style={[s.footer, { borderTopColor: BORDER }]}>
+                      <View>
+                        <Text style={[s.amountLabel, { color: MUTED }]}>Total Amount</Text>
+                        <Text style={[s.amount, { color: TEXT }]}>
+                          {formatCurrency(item.amount, item.currency || 'RWF')}
+                        </Text>
+                      </View>
+
+                      <View>
+                        <Text style={[s.amountLabel, { color: MUTED }]}>Amount Paid</Text>
+                        <Text style={[s.amount, { color: '#22C55E' }]}>
+                          {formatCurrency(item.amountPaid, item.currency || 'RWF')}
+                        </Text>
+                      </View>
+
+                      <View>
+                        <Text style={[s.amountLabel, { color: MUTED }]}>Due Date</Text>
+                        <Text style={[s.amount, { color: TEXT }]}>
+                          {item.dueDate ? formatDate(item.dueDate) : '—'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {canPay(item.status) && (
+                      <Pressable
+                        style={({ pressed }) => [s.payButton, { opacity: pressed ? 0.85 : 1 }]}
+                        onPress={() => handlePayInvoice(item)}>
+                        <Ionicons name="flash" size={16} color="#FFFFFF" />
+                        <Text style={s.payButtonText}>Pay with Lightning ⚡</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })
+            )
+          ) : (
+            /* ── PAYMENTS TAB ── */
+            transactions.length === 0 ? (
+              <View style={s.empty}>
+                <Ionicons name="card-outline" size={44} color={MUTED} />
+                <Text style={[s.emptyTitle, { color: TEXT }]}>No Payment Records</Text>
+                <Text style={[s.emptySub, { color: MUTED }]}>
+                  Completed transactions will be displayed here.
+                </Text>
+              </View>
+            ) : (
+              transactions.map((tx: Payment) => (
+                <View key={tx.id} style={[s.card, { backgroundColor: CARD_BG, borderColor: BORDER }]}>
+                  <View style={s.cardHeader}>
+                    <View style={s.txIconBox}>
+                      <Ionicons name="flash" size={20} color={GREEN} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[s.type, { color: TEXT }]}>{tx.invoiceId || 'School Fees Payment'}</Text>
+                      <Text style={[s.description, { color: MUTED }]}>{tx.reference || tx.id}</Text>
+                    </View>
+                    <View style={[s.badge, { backgroundColor: '#DCFCE7' }]}>
+                      <Text style={[s.badgeText, { color: '#22C55E' }]}>{tx.status}</Text>
+                    </View>
+                  </View>
+
+                  <View style={[s.footer, { borderTopColor: BORDER }]}>
+                    <View>
+                      <Text style={[s.amountLabel, { color: MUTED }]}>Date</Text>
+                      <Text style={[s.amount, { color: TEXT }]}>{tx.date}</Text>
+                    </View>
+                    <View>
+                      <Text style={[s.amountLabel, { color: MUTED }]}>Amount</Text>
+                      <Text style={[s.amount, { color: TEXT }]}>
+                        {tx.currency} {tx.amount.toLocaleString()}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={[s.amountLabel, { color: MUTED }]}>Lightning Sats</Text>
+                      <Text style={[s.amount, { color: '#F59E0B' }]}>
+                        {tx.btcSats ? `${tx.btcSats.toLocaleString()} sats` : '⚡'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-
-                {/* Divider */}
-                <View style={[s.divider, { backgroundColor: BORDER }]} />
-
-                {/* Detail rows */}
-                <View style={s.txDetails}>
-                  <Detail label="Date"       value={tx.date} MUTED={MUTED} TEXT={TEXT} />
-                  <Detail label="Amount"     value={`${tx.currency} ${tx.amount.toLocaleString()}`} MUTED={MUTED} TEXT={TEXT} bold />
-                  <Detail label="BTC Sats"   value={`${tx.btcSats?.toLocaleString() ?? 0} sats`} MUTED={MUTED} TEXT="#F59E0B" />
-                  <Detail label="Method"     value={`${tx.method} ⚡`} MUTED={MUTED} TEXT={TEXT} />
-                </View>
-              </View>
-            ))
+              ))
+            )
           )}
+
         </ScrollView>
 
       </SafeAreaView>
-    </View>
-  );
-}
-
-function Detail({ label, value, MUTED, TEXT, bold }: any) {
-  return (
-    <View style={s.detailRow}>
-      <Text style={[s.detailLabel, { color: MUTED }]}>{label}</Text>
-      <Text style={[s.detailValue, { color: TEXT, fontWeight: bold ? '800' : '500' }]}>{value}</Text>
     </View>
   );
 }
@@ -155,9 +258,6 @@ const s = StyleSheet.create({
   safe: { flex: 1 },
 
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,
@@ -167,30 +267,56 @@ const s = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.5,
   },
-  headerCount: {
+
+  tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginVertical: 8,
+    backgroundColor: '#EAEFEA',
+    borderRadius: 14,
+    padding: 4,
+  },
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  tabBtnActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabTxt: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  tabTxtActive: {
+    color: '#386635',
   },
 
   filterRow: {
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 6,
     gap: 8,
   },
   filterChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
   },
   filterLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
 
   scroll: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 10,
     paddingBottom: 110,
     gap: 12,
   },
@@ -198,7 +324,7 @@ const s = StyleSheet.create({
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
+    paddingTop: 60,
     gap: 10,
   },
   emptyTitle: {
@@ -210,63 +336,79 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
 
-  txCard: {
-    borderRadius: 18,
+  card: {
+    borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
-    gap: 12,
+    gap: 10,
   },
-  txTop: {
+  cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 10,
   },
-  txIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+  txIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#EAEFEA',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 4,
   },
-  txMeta: {
-    flex: 1,
-    gap: 2,
+  number: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#386635',
   },
-  txDesc: {
+  type: {
     fontSize: 15,
     fontWeight: '700',
+    marginTop: 2,
   },
-  txId: {
-    fontSize: 11,
-  },
-  statusBadge: {
+  badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  txStatus: {
+  badgeText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
   },
-
-  divider: {
-    height: StyleSheet.hairlineWidth,
+  description: {
+    fontSize: 13,
+    marginTop: 2,
   },
-
-  txDetails: {
-    gap: 6,
-  },
-  detailRow: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 6,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  amountLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  amount: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  payButton: {
+    marginTop: 8,
+    backgroundColor: '#386635',
+    borderRadius: 12,
+    paddingVertical: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
-  detailLabel: {
-    fontSize: 13,
-  },
-  detailValue: {
-    fontSize: 13,
-    maxWidth: '65%',
-    textAlign: 'right',
+  payButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
