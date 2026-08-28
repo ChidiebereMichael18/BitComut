@@ -19,7 +19,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [slug, setSlugState] = useState(DEFAULT_SLUG)
 
   useEffect(() => {
-    AsyncStorage.getItem(TENANT_KEY).then((s) => {
+    AsyncStorage.getItem(TENANT_KEY).then((s: string | null) => {
       if (s) setSlugState(s)
     })
   }, [])

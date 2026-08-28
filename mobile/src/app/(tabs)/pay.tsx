@@ -68,10 +68,11 @@ export default function PayScreen() {
     try {
       const res = await payInvoice(invoiceId)
       await created(res)
-    } catch (e: any) {
-      setCreating(false)
-      setLoading(false)
-      Alert.alert("Payment Error", e.message || "Unable to create payment")
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setCreating(false);
+      setLoading(false);
+      Alert.alert("Payment Error", e.message || "Unable to create payment");
     }
   }
 
